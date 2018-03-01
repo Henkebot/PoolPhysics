@@ -2,7 +2,7 @@
 #define HOLE_H
 #include <SFML\Graphics.hpp>
 #include <glm.hpp>
-
+#include "Ball.h"
 class Hole : public sf::Drawable
 {
 private:
@@ -18,6 +18,7 @@ public:
 	~Hole(); 
 
 	void setPosition(glm::vec2 position); 
+	bool collision(const Ball& ball) const;
 
 };
 #endif

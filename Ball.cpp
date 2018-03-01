@@ -2,7 +2,7 @@
 
 Ball::Ball(glm::vec2 position)
 {
-		m_radius = 50; 
+		m_radius = 25; 
 		m_shape = sf::CircleShape(m_radius);
 		m_shape.setOrigin(m_radius, m_radius);
 		m_shape.setPosition(sf::Vector2f(position.x, position.y));
@@ -38,7 +38,7 @@ void Ball::setVelocity(glm::vec2 velocity)
 	m_velocity = velocity;
 }
 
-glm::vec2 Ball::getPosition() 
+glm::vec2 Ball::getPosition() const
 {
 	return m_position;
 }

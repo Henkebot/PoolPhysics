@@ -23,7 +23,7 @@ public:
 	void setMass(float mass); 
 
 	glm::vec2 getVelocity(); 
-	glm::vec2 getPosition(); 
+	glm::vec2 getPosition() const; 
 	float getMass(); 
 	sf::CircleShape getShape(); 
 

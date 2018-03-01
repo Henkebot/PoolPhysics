@@ -24,3 +24,9 @@ void Hole::setPosition(glm::vec2 position)
 	m_position.y = position.y; 
 	m_sprite.setPosition(position.x, position.y);
 }
+
+bool Hole::collision(const Ball & ball) const
+{
+	float distance = glm::length(ball.getPosition() - m_position);
+	return distance < (2 * m_radius)/2;
+}

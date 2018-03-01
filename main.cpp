@@ -9,19 +9,54 @@
 #include <glm.hpp>
 #define WIDTH 1300.0f
 #define HEIGHT 720.0f
-#define Radius 50
+#define Radius 25
+#define numberOfBalls 3
+
+void collisionMove(Ball& ball1, Ball& ball2)
+{
+	float e = 1;
+	glm::vec2 gWhiteDir = (glm::vec2(ball1.getVelocity().x, ball1.getVelocity().y));
+	glm::vec2 gYellowDir = (glm::vec2(ball2.getVelocity().x, ball2.getVelocity().y));
+
+	glm::vec2 gWhitePos = glm::vec2(ball1.getPosition().x, ball1.getPosition().y);
+	glm::vec2 gYellowPos = glm::vec2(ball2.getPosition().x, ball2.getPosition().y);
+
+	glm::vec2 d = glm::normalize(gWhitePos - gYellowPos);
+	if (glm::length(d))
+	{
+		glm::vec2 WhiteV0 = glm::dot(gWhiteDir, d) * d;
+		glm::vec2 YellowV0 = glm::dot(gYellowDir, d) * d;
+
+		float WhiteMass = ball1.getMass();
+		float YellowMass = ball2.getMass();
+
+		glm::vec2 WhiteV1 = (WhiteV0*(WhiteMass - (YellowMass*e)) + (YellowMass * YellowV0 *(1 + e))) / (WhiteMass + YellowMass);
+		glm::vec2 YellowV1 = (YellowV0*(YellowMass - (WhiteMass*e)) + (WhiteMass*WhiteV0*(1 + e))) / (WhiteMass + YellowMass);
+
+		glm::vec2 WhiteFinal = gWhiteDir - WhiteV0 + WhiteV1;
+		glm::vec2 YellowFinal = gYellowDir - YellowV0 + YellowV1;
+		WhiteFinal = (WhiteFinal);
+		YellowFinal = (YellowFinal);
+
+		ball1.setVelocity(WhiteFinal);
+		ball2.setVelocity(YellowFinal);
+	}
+
+	
+
+
+}
 
 void checkBounds(Ball& ball)
 {
-	if (GetAsyncKeyState(int('C')))
-		__debugbreak();
-	if ((ball.getPosition().x + Radius) > WIDTH || (ball.getPosition().x - Radius) < 0)
+
+	if ((ball.getPosition().x + Radius) > WIDTH - 40 || (ball.getPosition().x - Radius) < 40)
 	{
 		ball.setVelocity(glm::vec2(ball.getVelocity().x * -1, ball.getVelocity().y));
 	}
 
 
-	if ((ball.getPosition().y + Radius) > HEIGHT || ((ball.getPosition().y - Radius < 0)))
+	if ((ball.getPosition().y + Radius) > HEIGHT - 40|| ((ball.getPosition().y - Radius < 40)))
 	{
 		ball.setVelocity(glm::vec2(ball.getVelocity().x, ball.getVelocity().y * -1));
 	}
@@ -35,9 +70,10 @@ bool checkCollison(Ball ball1, Ball ball2)
 	return distance <= Radius*2;
 }
 
-bool move(Ball& ball, Ball& ball2)
+int move(Ball& ball, std::vector<Ball>& balls)
 {
-	bool Collision = false;
+
+	int collisionId = -1;
 	glm::vec2 currentPos = ball.getPosition();
 
 	glm::vec2 nextPos = ball.getPosition() + ball.getVelocity();
@@ -46,27 +82,40 @@ bool move(Ball& ball, Ball& ball2)
 
 	float precision = 10.0f;
 
-	for (float i = distance / precision; i < distance && !Collision; i += distance / precision)
+	for (float i = distance / precision; i <= distance && collisionId == -1; i += distance / precision)
 	{
-		glm::vec2 pos = ball.getPosition() + ((ball.getVelocity() / precision) * i);
 
-		float distanceBet = glm::length(ball2.getPosition() - pos);
-		Collision = distanceBet < Radius * 2;
-		if (!Collision)
+		glm::vec2 pos = ball.getPosition() + ((ball.getVelocity() / precision) * i) ;
+		
+		for (int j = 0; j < balls.size(); j++)
 		{
+			if (balls[j].getPosition() == ball.getPosition()) continue;
+
+			float distanceBet = glm::length(balls[j].getPosition() - pos);
+			
+			if (distanceBet < Radius * 2)
+			{
+				collisionMove(ball, balls[j]);
+				collisionId = j;
+			}
+		}
+		if (collisionId == -1)
+		{
+			
+
 			ball.setPosition(pos);
+
 		}
 
 	}
 
-	return Collision;
+	return collisionId;
 }
 
-const float G = 0.00982f;
 int main()
 {
 	Hole holeArray[8]; 
-
+	std::vector <Ball> balls;
 	holeArray[0].setPosition(glm::vec2(0 + 40, 0 + 40)); 
 	holeArray[1].setPosition(glm::vec2(0 + 40, 360));
 	holeArray[2].setPosition(glm::vec2(0 + 40 , 720 - 40));
@@ -77,18 +126,26 @@ int main()
 	holeArray[7].setPosition(glm::vec2(650, 0 + 40));
 
 	Background background = Background();
-
-	Ball white(glm::vec2(WIDTH / 2.0f, HEIGHT / 2.0f));
-    white.setColor(sf::Color::White);
-	white.setVelocity(glm::vec2(1, 0));
-	white.setMass(25);
 	
 
-	Ball yellow(glm::vec2(80.0f, (HEIGHT / 2) + 50.0f));
-	yellow.setColor(sf::Color::Yellow);
-	yellow.setVelocity(glm::vec2(0,1));
-	yellow.setMass(120.0f);
+	sf::Color colors[] =
+	{
+		sf::Color::Red,
+		sf::Color::Yellow,
+		sf::Color::Blue,
+		sf::Color::Green,
+		sf::Color::Magenta,
+		sf::Color::Cyan
+	};
 
+	for (int i = 0; i < numberOfBalls; i++)
+	{
+		balls.push_back(Ball(glm::vec2( ((i+1)* 3 * Radius) + Radius , HEIGHT / 2.0)));
+		balls.back().setVelocity(glm::vec2(1,-1));
+		balls.back().setMass(50);
+		balls.back().setColor(colors[i % 6]);
+	}
+	
 	bool Collision = false;
 
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "SFML works!");
@@ -98,8 +155,12 @@ int main()
     {
 		if (GetAsyncKeyState(VK_SPACE))
 		{
-			white.setVelocity(glm::normalize(white.getVelocity()));
-			yellow.setVelocity(glm::normalize(yellow.getVelocity()));
+
+			for (auto& ball : balls)
+			{
+				ball.setVelocity(glm::normalize(ball.getVelocity()) * 1.5f);
+			}
+
 		}
         sf::Event event;
         while (window.pollEvent(event))
@@ -108,122 +169,19 @@ int main()
                 window.close();
         }
 		
-		checkBounds(white);
-		checkBounds(yellow);
 
-		Collision = false;
-		
-		Collision = move(white, yellow);
-		Collision = move(yellow, white);
-
-
-		//for(int i = 0; i < white.getVelocity().x && Collision == false || i < white.getVelocity().y && Collision == false;i++)
-		//{
-		//	if (i < white.getVelocity().x)
-		//	{
-		//		
-		//		whitePos.x += 1;
-		//	}
-		//	if (i < whiteDir.y)
-		//	{
-		//		whitePos.y += 1;
-		//	}
-		//	sf::Vector2f oldPos = whiteBall.getPosition();
-		//	
-		//	Collision = checkCollison(whiteBall, yellowBall);
-		//	if(Collision)
-		//		whiteBall.setPosition(oldPos);
-		//}
-		//for (int i = 0; i < yellowDir.x && Collision == false || i < yellowDir.y && Collision == false; i++)
-		//{
-		//	if (i < yellowDir.x)
-		//	{
-		//		yellowPos.x += 1;
-		//	}
-		//	if (i < yellowDir.y)
-		//	{
-		//		yellowPos.y += 1;
-		//	}
-		//	sf::Vector2f oldPos = yellowBall.getPosition();
-		//	yellowBall.setPosition(yellowPos);
-		//	Collision = checkCollison(whiteBall, yellowBall);
-		//	if (Collision)
-		//		yellowBall.setPosition(oldPos);
-		//}
-		//for (int i = 0; i > whiteDir.x && Collision == false || i > whiteDir.y && Collision == false; i--)
-		//{
-		//	if (i > whiteDir.x)
-		//	{
-		//		whitePos.x -= 1;
-		//	}
-		//	if (i > whiteDir.y)
-		//	{
-		//		whitePos.y -= 1;
-		//	}
-		//	sf::Vector2f oldPos = whiteBall.getPosition();
-		//	whiteBall.setPosition(whitePos);
-		//	Collision = checkCollison(whiteBall, yellowBall);
-		//	if (Collision)
-		//		whiteBall.setPosition(oldPos);
-		//}
-		//for (int i = 0; i > yellowDir.x && Collision == false || i > yellowDir.y && Collision == false; i--)
-		//{
-		//	if (i > yellowDir.x)
-		//	{
-		//		yellowPos.x -= 1;
-		//	}
-		//	if (i > yellowDir.y)
-		//	{
-		//		yellowPos.y -= 1;
-		//	}
-		//	sf::Vector2f oldPos = whiteBall.getPosition();
-		//	yellowBall.setPosition(yellowPos);
-		//	Collision = checkCollison(whiteBall, yellowBall);
-		//	if (Collision)
-		//		yellowBall.setPosition(oldPos);
-		//}
-
-		if (Collision)
+		for (int i = 0; i < balls.size(); i++)
 		{
-			static float e = 0.5;
-
-
-			glm::vec2 gWhiteDir = (glm::vec2(white.getVelocity().x, white.getVelocity().y));
-			glm::vec2 gYellowDir = (glm::vec2(yellow.getVelocity().x, yellow.getVelocity().y));
-
-			glm::vec2 gWhitePos = glm::vec2(white.getPosition().x, white.getPosition().y);
-			glm::vec2 gYellowPos = glm::vec2(yellow.getPosition().x, yellow.getPosition().y);
-
-			glm::vec2 d = glm::normalize(gWhitePos - gYellowPos);
-
-			glm::vec2 WhiteV0 = glm::dot(gWhiteDir, d) * d;
-			glm::vec2 YellowV0 = glm::dot(gYellowDir, d) * d;
-
-			float WhiteMass = white.getMass();
-			float YellowMass = yellow.getMass();
-
-			glm::vec2 WhiteV1 = (WhiteV0*(WhiteMass - (YellowMass*e)) + (YellowMass * YellowV0 *(1 + e))) / (WhiteMass + YellowMass);
-			glm::vec2 YellowV1 = (YellowV0*(YellowMass - (WhiteMass*e)) + (WhiteMass*WhiteV0*(1 + e))) / (WhiteMass + YellowMass);
-
-			glm::vec2 WhiteFinal = gWhiteDir - WhiteV0 + WhiteV1;
-			glm::vec2 YellowFinal = gYellowDir - YellowV0 + YellowV1;
-			WhiteFinal = (WhiteFinal);
-			YellowFinal = (YellowFinal);
-
-			/*std::cout << "WhiteBall Direction: before: (" << gWhiteDir.x << "," << gWhiteDir.y << ")" << " After: (" << WhiteFinal.x << "," << WhiteFinal.y << ")\n";
-			std::cout << "WhiteBall Position: (" << whitePos.x << "," << whitePos.y << ")" << std::endl;
-
-			std::cout << "\nYellowBall Direction: before: (" << gYellowDir.x << "," << gYellowDir.y << ")" << " After: (" << YellowFinal.x << "," << YellowFinal.y << ")\n";
-			std::cout << "YellowBall Position: (" << yellowPos.x << "," << yellowPos.y << ")" << std::endl;*/
-
-			white.setVelocity(WhiteFinal);
-			yellow.setVelocity(YellowFinal);
 			
+			checkBounds(balls[i]);
+			glm::vec2 initialVel = balls[i].getVelocity();
+			glm::vec2 finalVelocity = initialVel - ((initialVel*-(0.2f * -(balls[i].getMass()*9.82f) * 0.0001f)) / balls[i].getMass());
+			balls[i].setVelocity(finalVelocity);
 
-
-
-
+			move(balls[i], balls);
+			
 		}
+	
 	
         window.clear();
 		window.draw(background);
@@ -233,8 +191,29 @@ int main()
 			window.draw(holeArray[i]); 
 		}
 
-		window.draw(white.getShape());
-        window.draw(yellow.getShape());
+		for (auto& ball : balls)
+		{
+			window.draw(ball.getShape());
+
+			sf::Vertex line[] =
+			{
+				sf::Vertex(sf::Vector2f(ball.getPosition().x, ball.getPosition().y)),
+				sf::Vertex(sf::Vector2f(ball.getPosition().x + (ball.getVelocity().x * Radius), ball.getPosition().y + (ball.getVelocity().y * Radius)))
+			};
+
+			window.draw(line, 2, sf::Lines);
+
+		}
+		int removeIndex = -1;
+		for (int i = 0; i < balls.size(); i++)
+		{
+			for (auto& hole : holeArray)
+				if (hole.collision(balls[i]))
+					removeIndex = i;
+
+		}
+		if(removeIndex != -1)balls.erase(balls.begin() + removeIndex);
+		
         window.display();
     }
 

@@ -1,2 +1,4 @@
-﻿  PoolGameEngine.vcxproj -> C:\Users\BTH\Desktop\PoolPhysics\Debug\PoolGameEngine.exe
-  PoolGameEngine.vcxproj -> C:\Users\BTH\Desktop\PoolPhysics\Debug\PoolGameEngine.pdb (Partial PDB)
+﻿  main.cpp
+c:\users\bth\desktop\poolphysics\poolphysics\main.cpp(143): warning C4244: 'argument': conversion from 'float' to 'unsigned int', possible loss of data
+  PoolGameEngine.vcxproj -> C:\Users\BTH\Desktop\PoolPhysics\PoolPhysics\Debug\PoolGameEngine.exe
+  PoolGameEngine.vcxproj -> C:\Users\BTH\Desktop\PoolPhysics\PoolPhysics\Debug\PoolGameEngine.pdb (Partial PDB)

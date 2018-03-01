@@ -2,86 +2,26 @@
 #include <cmath>
 #include <iostream>
 #include <Windows.h>
+#include "Ball.h"
+#include "Background.h"
+#include "Hole.h"
 
 #include <glm.hpp>
-#define WIDTH 1280.0f
+#define WIDTH 1300.0f
 #define HEIGHT 720.0f
 #define Radius 50
-
-class Ball
-{
-private:
-	sf::CircleShape shape;
-	float mass;
-	glm::vec2 velocity;
-	glm::vec2 position;
-
-public:
-
-	Ball(glm::vec2 pos)
-	{
-		this->shape = sf::CircleShape(Radius);
-		shape.setOrigin(Radius, Radius);
-		shape.setPosition(sf::Vector2f(pos.x, pos.y));
-		
-		position = pos;
-		velocity = glm::vec2(0, 0);
-		mass = 50;
-	}
-
-	void setColor(sf::Color color)
-	{
-		shape.setFillColor(color);
-	}
-
-	void setPosition(glm::vec2 position)
-	{
-		this->position = position;
-		shape.setPosition(position.x, position.y);
-	}
-
-	glm::vec2 getVelocity()
-	{
-		return velocity;
-	}
-
-	void setVelocity(glm::vec2 velocity)
-	{
-		this->velocity = velocity;
-	}
-
-	glm::vec2 getPos()
-	{
-		return position;
-	}
-
-	void setMass(float mass)
-	{
-		this->mass = mass;
-	}
-	float getMass()
-	{
-		return mass;
-	}
-
-	sf::CircleShape getShape()
-	{
-		return shape;
-	}
-};
-
 
 void checkBounds(Ball& ball)
 {
 	if (GetAsyncKeyState(int('C')))
 		__debugbreak();
-	if ((ball.getPos().x + Radius) > WIDTH || (ball.getPos().x - Radius) < 0)
+	if ((ball.getPosition().x + Radius) > WIDTH || (ball.getPosition().x - Radius) < 0)
 	{
 		ball.setVelocity(glm::vec2(ball.getVelocity().x * -1, ball.getVelocity().y));
 	}
 
 
-	if ((ball.getPos().y + Radius) > HEIGHT || ((ball.getPos().y - Radius < 0)))
+	if ((ball.getPosition().y + Radius) > HEIGHT || ((ball.getPosition().y - Radius < 0)))
 	{
 		ball.setVelocity(glm::vec2(ball.getVelocity().x, ball.getVelocity().y * -1));
 	}
@@ -90,7 +30,7 @@ void checkBounds(Ball& ball)
 bool checkCollison(Ball ball1, Ball ball2)
 {
 
-	float distance = glm::length(ball1.getPos() - ball2.getPos());
+	float distance = glm::length(ball1.getPosition() - ball2.getPosition());
 
 	return distance <= Radius*2;
 }
@@ -98,9 +38,9 @@ bool checkCollison(Ball ball1, Ball ball2)
 bool move(Ball& ball, Ball& ball2)
 {
 	bool Collision = false;
-	glm::vec2 currentPos = ball.getPos();
+	glm::vec2 currentPos = ball.getPosition();
 
-	glm::vec2 nextPos = ball.getPos() + ball.getVelocity();
+	glm::vec2 nextPos = ball.getPosition() + ball.getVelocity();
 
 	float distance = glm::length(nextPos - currentPos);
 
@@ -108,9 +48,9 @@ bool move(Ball& ball, Ball& ball2)
 
 	for (float i = distance / precision; i < distance && !Collision; i += distance / precision)
 	{
-		glm::vec2 pos = ball.getPos() + ((ball.getVelocity() / precision) * i);
+		glm::vec2 pos = ball.getPosition() + ((ball.getVelocity() / precision) * i);
 
-		float distanceBet = glm::length(ball2.getPos() - pos);
+		float distanceBet = glm::length(ball2.getPosition() - pos);
 		Collision = distanceBet < Radius * 2;
 		if (!Collision)
 		{
@@ -122,11 +62,22 @@ bool move(Ball& ball, Ball& ball2)
 	return Collision;
 }
 
-
-
 const float G = 0.00982f;
 int main()
 {
+	Hole holeArray[8]; 
+
+	holeArray[0].setPosition(glm::vec2(0 + 40, 0 + 40)); 
+	holeArray[1].setPosition(glm::vec2(0 + 40, 360));
+	holeArray[2].setPosition(glm::vec2(0 + 40 , 720 - 40));
+	holeArray[3].setPosition(glm::vec2(650, 720 - 40));
+	holeArray[4].setPosition(glm::vec2(1300 -  40, 720 - 40));
+	holeArray[5].setPosition(glm::vec2(1300 - 40, 360));
+	holeArray[6].setPosition(glm::vec2(1300 - 40, 0 + 40));
+	holeArray[7].setPosition(glm::vec2(650, 0 + 40));
+
+	Background background = Background();
+
 	Ball white(glm::vec2(WIDTH / 2.0f, HEIGHT / 2.0f));
     white.setColor(sf::Color::White);
 	white.setVelocity(glm::vec2(1, 0));
@@ -147,8 +98,8 @@ int main()
     {
 		if (GetAsyncKeyState(VK_SPACE))
 		{
-			white.setVelocity(glm::vec2(1, 0));
-			yellow.setVelocity(glm::vec2(0, 1));
+			white.setVelocity(glm::normalize(white.getVelocity()));
+			yellow.setVelocity(glm::normalize(yellow.getVelocity()));
 		}
         sf::Event event;
         while (window.pollEvent(event))
@@ -240,8 +191,8 @@ int main()
 			glm::vec2 gWhiteDir = (glm::vec2(white.getVelocity().x, white.getVelocity().y));
 			glm::vec2 gYellowDir = (glm::vec2(yellow.getVelocity().x, yellow.getVelocity().y));
 
-			glm::vec2 gWhitePos = glm::vec2(white.getPos().x, white.getPos().y);
-			glm::vec2 gYellowPos = glm::vec2(yellow.getPos().x, yellow.getPos().y);
+			glm::vec2 gWhitePos = glm::vec2(white.getPosition().x, white.getPosition().y);
+			glm::vec2 gYellowPos = glm::vec2(yellow.getPosition().x, yellow.getPosition().y);
 
 			glm::vec2 d = glm::normalize(gWhitePos - gYellowPos);
 
@@ -273,12 +224,15 @@ int main()
 
 
 		}
-		
-
-		
-
-
+	
         window.clear();
+		window.draw(background);
+
+		for (int i = 0; i < 8; i++)
+		{
+			window.draw(holeArray[i]); 
+		}
+
 		window.draw(white.getShape());
         window.draw(yellow.getShape());
         window.display();

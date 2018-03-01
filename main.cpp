@@ -1,6 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include <cmath>
 #include <iostream>
+
 #include <glm.hpp>
 #define WIDTH 1280
 #define HEIGHT 720

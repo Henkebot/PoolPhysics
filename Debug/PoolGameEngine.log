@@ -1,0 +1,4 @@
+﻿  main.cpp
+d:\skola\fy1426 tillämpad realtidsfysik\poolgameengine\main.cpp(161): warning C4305: 'initializing': truncation from 'double' to 'float'
+  PoolGameEngine.vcxproj -> D:\Skola\FY1426 Tillämpad realtidsfysik\PoolGameEngine\Debug\PoolGameEngine.exe
+  PoolGameEngine.vcxproj -> D:\Skola\FY1426 Tillämpad realtidsfysik\PoolGameEngine\Debug\PoolGameEngine.pdb (Partial PDB)

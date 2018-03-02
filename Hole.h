@@ -7,7 +7,9 @@ class Hole : public sf::Drawable
 {
 private:
 	glm::vec2 m_position; 
-	sf::Texture m_texture;
+
+	static sf::Texture m_texture;
+
 	sf::Sprite m_sprite; 
 	float m_radius; 
 

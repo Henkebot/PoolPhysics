@@ -1,5 +1,7 @@
 #include "Hole.h"
 
+sf::Texture Hole::m_texture;
+
 void Hole::draw(sf::RenderTarget & renderTarget, sf::RenderStates states) const
 {
 	renderTarget.draw(m_sprite, states); 
@@ -12,6 +14,7 @@ Hole::Hole(glm::vec2 position)
 	m_texture.loadFromFile("graphics/Hole.png"); 
 	m_sprite.setTexture(m_texture);
 	m_sprite.setOrigin(35, 35); 
+	m_sprite.setPosition(position.x, position.y);
 }
 
 Hole::~Hole()

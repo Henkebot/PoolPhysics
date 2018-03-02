@@ -101,13 +101,20 @@ void Table::_checkBounds(Ball & ball)
 	int startX = m_Width - m_Width * m_Scale.x;
 	int endY = m_Height * m_Scale.y;
 
-	if ((ball.getPosition().x + ball.getRadius()) > m_Width - 40 || (ball.getPosition().x - ball.getRadius()) < startX + EDGE_WIDTH)
+	if ((ball.getPosition().x + ball.getRadius()) > m_Width - EDGE_WIDTH && ball.getVelocity().x > 0)
+	{
+		ball.setVelocity(glm::vec2(ball.getVelocity().x * -1, ball.getVelocity().y));
+	}
+	else if ((ball.getPosition().x - ball.getRadius()) < startX + EDGE_WIDTH && ball.getVelocity().x < 0)
 	{
 		ball.setVelocity(glm::vec2(ball.getVelocity().x * -1, ball.getVelocity().y));
 	}
 
-
-	if ((ball.getPosition().y + ball.getRadius()) > endY - 40 || ((ball.getPosition().y - ball.getRadius() < EDGE_WIDTH)))
+	if ((ball.getPosition().y + ball.getRadius()) > m_Height - 40 && ball.getVelocity().y > 0)
+	{
+		ball.setVelocity(glm::vec2(ball.getVelocity().x, ball.getVelocity().y * -1));
+	}
+	else if ((ball.getPosition().y - ball.getRadius() < EDGE_WIDTH) && ball.getVelocity().y < 0)
 	{
 		ball.setVelocity(glm::vec2(ball.getVelocity().x, ball.getVelocity().y * -1));
 	}

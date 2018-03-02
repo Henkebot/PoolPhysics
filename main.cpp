@@ -1,3 +1,4 @@
+
 #include <SFML/Graphics.hpp>
 #include <cmath>
 #include <iostream>
@@ -11,12 +12,6 @@
 #define WIDTH 1300.0f
 #define HEIGHT 720.0f
 #define UPDATE_RATE 60.0f
-
-int move(Ball& ball, std::vector<Ball>& balls)
-{
-
-	return 0;
-}
 
 int main()
 {

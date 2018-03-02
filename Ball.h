@@ -11,6 +11,7 @@ private:
 	float m_mass; 
 	glm::vec2 m_position;
 	glm::vec2 m_velocity; 
+	glm::vec3 m_angleVelocity; 
 
 
 public:
@@ -21,11 +22,13 @@ public:
 	void setPosition(glm::vec2 position); 
 	void setVelocity(glm::vec2 velocity); 
 	void setMass(float mass); 
+	void setAngleVelocity(glm::vec3 angleVelocity); 
 
 	glm::vec2 getVelocity(); 
 	glm::vec2 getPosition() const; 
 	float getMass(); 
 	sf::CircleShape getShape(); 
+	glm::vec3 getAngleVelocity() const;
 
 
 };

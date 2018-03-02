@@ -10,7 +10,10 @@
 #define WIDTH 1300.0f
 #define HEIGHT 720.0f
 #define Radius 25
-#define numberOfBalls 3
+#define numberOfBalls 1
+#define density 1637
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 void collisionMove(Ball& ball1, Ball& ball2)
 {
@@ -112,6 +115,19 @@ int move(Ball& ball, std::vector<Ball>& balls)
 	return collisionId;
 }
 
+
+glm::vec2 calcNewVelocity(Ball& ball)
+{
+	glm::vec3 initialVel = glm::vec3(ball.getVelocity().x, ball.getVelocity().y,0);
+	glm::vec2 frictionForce = -(initialVel*-(0.2f * -(ball.getMass()*9.82f) * 0.0001f));
+	//frictionForce = glm::vec2(0.0f, 0.0f);
+	glm::vec3 temp = glm::vec3((pow(M_PI, 2) * pow(Radius, 3) * density) * ball.getAngleVelocity().x, (pow(M_PI, 2) * pow(Radius, 3) * density) * ball.getAngleVelocity().y, (pow(M_PI, 2) * pow(Radius, 3) * density) * ball.getAngleVelocity().z);
+	glm::vec3 magnusEffectForce = glm::cross(temp, initialVel); 
+	glm::vec2 finalForce = glm::vec2(frictionForce.x + magnusEffectForce.x, frictionForce.y + magnusEffectForce.y);
+	glm::vec2 finalVel = ball.getVelocity() + (finalForce / ball.getMass());
+	return finalVel; 
+}
+
 int main()
 {
 	Hole holeArray[8]; 
@@ -140,8 +156,8 @@ int main()
 
 	for (int i = 0; i < numberOfBalls; i++)
 	{
-		balls.push_back(Ball(glm::vec2( ((i+1)* 3 * Radius) + Radius , HEIGHT / 2.0)));
-		balls.back().setVelocity(glm::vec2(1,-1));
+		balls.push_back(Ball(glm::vec2( ((i+1)* 3 * Radius) + Radius , HEIGHT / 2.0 + 40.0f)));
+		balls.back().setVelocity(glm::vec2(0.5,0.1f));
 		balls.back().setMass(50);
 		balls.back().setColor(colors[i % 6]);
 	}
@@ -174,9 +190,10 @@ int main()
 		{
 			
 			checkBounds(balls[i]);
-			glm::vec2 initialVel = balls[i].getVelocity();
-			glm::vec2 finalVelocity = initialVel - ((initialVel*-(0.2f * -(balls[i].getMass()*9.82f) * 0.0001f)) / balls[i].getMass());
+			
+			glm::vec2 finalVelocity = calcNewVelocity(balls[i]);
 			balls[i].setVelocity(finalVelocity);
+
 
 			move(balls[i], balls);
 			
@@ -204,16 +221,16 @@ int main()
 			window.draw(line, 2, sf::Lines);
 
 		}
-		int removeIndex = -1;
+		/*int removeIndex = -1;
 		for (int i = 0; i < balls.size(); i++)
 		{
 			for (auto& hole : holeArray)
 				if (hole.collision(balls[i]))
-					removeIndex = i;
+					//removeIndex = i;
 
 		}
 		if(removeIndex != -1)balls.erase(balls.begin() + removeIndex);
-		
+		*/
         window.display();
     }
 

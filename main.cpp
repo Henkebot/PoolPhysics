@@ -10,7 +10,7 @@
 #define WIDTH 1300.0f
 #define HEIGHT 720.0f
 #define Radius 25
-#define numberOfBalls 1
+#define numberOfBalls 15
 #define density 1637
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -53,13 +53,20 @@ void collisionMove(Ball& ball1, Ball& ball2)
 void checkBounds(Ball& ball)
 {
 
-	if ((ball.getPosition().x + Radius) > WIDTH - 40 || (ball.getPosition().x - Radius) < 40)
+	if ((ball.getPosition().x + Radius) > WIDTH - 40 && ball.getVelocity().x > 0)
+	{
+		ball.setVelocity(glm::vec2(ball.getVelocity().x * -1, ball.getVelocity().y));
+	}
+	else if((ball.getPosition().x - Radius) < 40 && ball.getVelocity().x < 0)
 	{
 		ball.setVelocity(glm::vec2(ball.getVelocity().x * -1, ball.getVelocity().y));
 	}
 
-
-	if ((ball.getPosition().y + Radius) > HEIGHT - 40|| ((ball.getPosition().y - Radius < 40)))
+	if ((ball.getPosition().y + Radius) > HEIGHT - 40 && ball.getVelocity().y > 0)
+	{
+		ball.setVelocity(glm::vec2(ball.getVelocity().x, ball.getVelocity().y * -1));
+	}
+	else if ((ball.getPosition().y - Radius < 40) && ball.getVelocity().y < 0)
 	{
 		ball.setVelocity(glm::vec2(ball.getVelocity().x, ball.getVelocity().y * -1));
 	}
@@ -120,7 +127,7 @@ glm::vec2 calcNewVelocity(Ball& ball)
 {
 	glm::vec3 initialVel = glm::vec3(ball.getVelocity().x, ball.getVelocity().y,0);
 	glm::vec2 frictionForce = -(initialVel*-(0.2f * -(ball.getMass()*9.82f) * 0.0001f));
-	//frictionForce = glm::vec2(0.0f, 0.0f);
+	frictionForce = glm::vec2(0.0f, 0.0f);
 	glm::vec3 temp = glm::vec3((pow(M_PI, 2) * pow(Radius, 3) * density) * ball.getAngleVelocity().x, (pow(M_PI, 2) * pow(Radius, 3) * density) * ball.getAngleVelocity().y, (pow(M_PI, 2) * pow(Radius, 3) * density) * ball.getAngleVelocity().z);
 	glm::vec3 magnusEffectForce = glm::cross(temp, initialVel); 
 	glm::vec2 finalForce = glm::vec2(frictionForce.x + magnusEffectForce.x, frictionForce.y + magnusEffectForce.y);

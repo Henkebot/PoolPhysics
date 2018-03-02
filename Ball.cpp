@@ -34,13 +34,15 @@ Ball::Ball(glm::vec2 position)
 		setColor(colors[ballTotalIndex++ % 6]);
 		
 		m_position = position;
-		m_velocity = glm::vec2(-2, 0);
+
+		m_velocity = glm::vec2(0, 0);
+		m_mass = 50;
+		m_angleVelocity = glm::vec3(0.0000000050f, 0.0000000010f, 0.0000000010f);
 }
 
 Ball::~Ball()
 {
 }
-
 
 void Ball::setColor(sf::Color color)
 {
@@ -72,6 +74,12 @@ void Ball::setMass(float mass)
 {
 	m_mass = mass;
 }
+
+void Ball::setAngleVelocity(glm::vec3 angleVelocity)
+{
+	m_angleVelocity = angleVelocity; 
+}
+
 float Ball::getMass() 
 {
 	return m_mass;
@@ -85,4 +93,9 @@ float Ball::getRadius() const
 sf::CircleShape Ball::getShape()
 {
 	return m_shape;
+}
+
+glm::vec3 Ball::getAngleVelocity() const
+{
+	return m_angleVelocity; 
 }

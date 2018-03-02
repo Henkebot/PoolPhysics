@@ -2,6 +2,7 @@
 #include <cmath>
 #include <iostream>
 #include <Windows.h>
+#include <chrono>
 #include "Ball.h"
 #include "Table.h"
 
@@ -9,30 +10,7 @@
 #include <glm.hpp>
 #define WIDTH 1300.0f
 #define HEIGHT 720.0f
-#define Radius 25
-#define numberOfBalls 3
-
-void collisionMove(Ball& ball1, Ball& ball2)
-{
-	
-	
-
-
-}
-
-void checkBounds(Ball& ball)
-{
-
-	
-}
-
-bool checkCollison(Ball ball1, Ball ball2)
-{
-
-	float distance = glm::length(ball1.getPosition() - ball2.getPosition());
-
-	return distance <= Radius*2;
-}
+#define UPDATE_RATE 60.0f
 
 int move(Ball& ball, std::vector<Ball>& balls)
 {
@@ -42,56 +20,50 @@ int move(Ball& ball, std::vector<Ball>& balls)
 
 int main()
 {
-
-	std::vector <Ball> balls;
 	
-	Table background(WIDTH,HEIGHT, 0.85);
-
-
-	for (int i = 0; i < numberOfBalls; i++)
-	{
-		balls.push_back(Ball(glm::vec2( ((i+1)* 3 * Radius) + Radius , HEIGHT / 2.0)));
-	}
-	
+	Table background(WIDTH,HEIGHT, 1);
 
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "SFML works!");
 
-
+	using namespace std::chrono;
+	auto lastTime = steady_clock::now();
+	int updates = 0;
+	int fpsCounter = 0;
+	float freq = 1000000000.0f / UPDATE_RATE;
+	float unprocessed = 0;
+	auto timer = steady_clock::now();
     while (window.isOpen())
     {
-		if (GetAsyncKeyState(VK_SPACE))
-		{
-
-			for (auto& ball : balls)
-			{
-				ball.setVelocity(glm::normalize(ball.getVelocity()) * 1.5f);
-			}
-
-		}
+		
         sf::Event event;
         while (window.pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
                 window.close();
         }
-		
-		background.update();
+		auto current_time = steady_clock::now();
+		auto dt = duration_cast<nanoseconds>(current_time - lastTime).count();
+		unprocessed += dt / freq;
+		lastTime = current_time;
 
-		/*for (int i = 0; i < balls.size(); i++)
+		while (unprocessed > 1)
 		{
-			
-			checkBounds(balls[i]);
-			glm::vec2 initialVel = balls[i].getVelocity();
-			glm::vec2 finalVelocity = initialVel - ((initialVel*-(0.2f * -(balls[i].getMass()*9.82f) * 0.0001f)) / balls[i].getMass());
-			balls[i].setVelocity(finalVelocity);
-
-			move(balls[i], balls);
-			
+			updates++;
+			unprocessed -= 1;
+			background.update(window);
 		}
-	*/
-	
         window.clear();
+		
+		fpsCounter++;
 		window.draw(background);
+		
+		if (duration_cast<milliseconds>(steady_clock::now() - timer).count() > 1000)
+		{
+			printf("\rFPS: %d TICK: %d", fpsCounter, updates);
+			updates = 0;
+			fpsCounter = 0;
+			timer += milliseconds(1000);
+		}
 
         window.display();
     }

@@ -1,5 +1,6 @@
 #include "Table.h"
-
+#include <Windows.h>
+#include <iostream>
 void Table::draw(sf::RenderTarget & renderTarget, sf::RenderStates states) const
 {
 
@@ -33,18 +34,23 @@ Table::Table(int width, int height, float scale)
 	_initBalls();
 }
 
-void Table::update()
+void Table::update(const sf::Window& window)
 {
 	for (auto& ball : m_Balls)
 	{
-		glm::vec2 initialVel = ball.getVelocity();
-		glm::vec2 frictionForce = -(initialVel*-(0.2f * -(ball.getMass()*9.82f) * 0.0001f));
-		// F - Ff = ma
-		glm::vec2 finalForce = glm::vec2(frictionForce.x, frictionForce.y);
-		ball.setVelocity(ball.getVelocity() + (finalForce/ball.getMass()));
+		
 		_checkBounds(ball);
+		ball.setVelocity(_calculateVel(ball));
+		if (GetAsyncKeyState(VK_SPACE))
+		{
+			sf::Mouse mouse;
+			sf::Vector2i lol = mouse.getPosition(window);
+			m_Balls.back().setVelocity(glm::normalize(glm::vec2(lol.x, lol.y) - m_Balls.back().getPosition()) * 25.0f);
+		}
 		_move(ball);
 	}
+
+	
 }
 
 Table::~Table()
@@ -54,16 +60,16 @@ Table::~Table()
 
 void Table::_initHoles()
 {
-	int startX = m_Width - m_Width * m_Scale.x;
+	int startX = m_Width - (m_Width * m_Scale.x);
 
 	m_Holes.push_back(Hole(glm::vec2(startX + EDGE_WIDTH,						0 + EDGE_WIDTH)));
 	m_Holes.push_back(Hole(glm::vec2(startX + EDGE_WIDTH,						360 * m_Scale.y)));
 	m_Holes.push_back(Hole(glm::vec2(startX + EDGE_WIDTH,						720 * m_Scale.y - EDGE_WIDTH)));
-	m_Holes.push_back(Hole(glm::vec2(startX + 650 * m_Scale.x,					720 * m_Scale.y - EDGE_WIDTH)));
-	m_Holes.push_back(Hole(glm::vec2(startX + 1300 * m_Scale.x - EDGE_WIDTH,	720 * m_Scale.y - EDGE_WIDTH)));
-	m_Holes.push_back(Hole(glm::vec2(startX + 1300 * m_Scale.x - EDGE_WIDTH,	360 * m_Scale.y)));
-	m_Holes.push_back(Hole(glm::vec2(startX + 1300 * m_Scale.x - EDGE_WIDTH,	0 + EDGE_WIDTH)));
-	m_Holes.push_back(Hole(glm::vec2(startX + 650 * m_Scale.x,					0 + EDGE_WIDTH)));
+	m_Holes.push_back(Hole(glm::vec2(startX + (650 * m_Scale.x),					720 * m_Scale.y - EDGE_WIDTH)));
+	m_Holes.push_back(Hole(glm::vec2(startX + (1300 * m_Scale.x) - EDGE_WIDTH,	720 * m_Scale.y - EDGE_WIDTH)));
+	m_Holes.push_back(Hole(glm::vec2(startX + (1300 * m_Scale.x) - EDGE_WIDTH,	360 * m_Scale.y)));
+	m_Holes.push_back(Hole(glm::vec2(startX + (1300 * m_Scale.x) - EDGE_WIDTH,	0 + EDGE_WIDTH)));
+	m_Holes.push_back(Hole(glm::vec2(startX + (650 * m_Scale.x),					0 + EDGE_WIDTH)));
 
 }
 
@@ -71,8 +77,8 @@ void Table::_initBalls()
 {
 	glm::vec2 dir(1, -1);
 	glm::vec2 dir2(1, 1);
-	int startX = m_Width * m_Scale.x * 0.85f;
-	int startY = m_Height * m_Scale.y * 0.5f;
+	int startX = m_Width - (m_Width * m_Scale.x * 0.85f);
+	int startY = m_Height - (m_Height * m_Scale.y * 0.5f);
 	for (int i = 0; i < 5; i++)
 	{
 		
@@ -115,7 +121,7 @@ void Table::_move(Ball & ball)
 
 	glm::vec2 nextPos = ball.getPosition() + ball.getVelocity();
 
-	float distance = glm::length(nextPos - currentPos);
+	float distance = 1;// glm::length(nextPos - currentPos);
 
 	float precision = 10.0f;
 
@@ -145,6 +151,18 @@ void Table::_move(Ball & ball)
 
 }
 
+glm::vec2 Table::_calculateVel(Ball & ball)
+{
+	glm::vec2 initialVel = glm::vec2(ball.getVelocity().x, ball.getVelocity().y);
+	glm::vec2 frictionForce = -(initialVel*-(0.2f * -(ball.getMass()*9.82f * 0.01f)));
+	//frictionForce = glm::vec2(0.0f, 0.0f);
+	glm::vec3 temp = glm::vec3((pow(M_PI, 2) * pow(ball.getRadius(), 3) * density) * ball.getAngleVelocity().x, (pow(M_PI, 2) * pow(ball.getRadius(), 3) * density) * ball.getAngleVelocity().y, (pow(M_PI, 2) * pow(ball.getRadius(), 3) * density) * ball.getAngleVelocity().z);
+	glm::vec3 magnusEffectForce = glm::cross(temp, glm::vec3(initialVel,0));
+	glm::vec2 finalForce = glm::vec2(frictionForce.x + magnusEffectForce.x, frictionForce.y + magnusEffectForce.y);
+	glm::vec2 finalVel = ball.getVelocity() + (finalForce / ball.getMass());
+	return finalVel;
+}
+
 void Table::_collision(Ball & ball1, Ball & ball2)
 {
 	float e = 1;
@@ -168,6 +186,8 @@ void Table::_collision(Ball & ball1, Ball & ball2)
 
 	glm::vec2 WhiteFinal = gWhiteDir - WhiteV0 + WhiteV1;
 	glm::vec2 YellowFinal = gYellowDir - YellowV0 + YellowV1;
+
+	ball2.setAngleVelocity(-ball1.getAngleVelocity());
 
 	ball1.setVelocity(WhiteFinal);
 	ball2.setVelocity(YellowFinal);

@@ -12,10 +12,30 @@
 #define WIDTH 1300.0f
 #define HEIGHT 720.0f
 #define UPDATE_RATE 60.0f
+bool checkKeys(int keys[], bool keyPressed[])
+{
+	for (int i = 0; i < 4; i++)
+	{
+		keyPressed[i] = GetAsyncKeyState(keys[i]);
+		
+		if(keyPressed[i])
+			return true;
+	}
+
+	return false;
+}
 
 int main()
 {
-	
+	int keys[] =
+	{
+		int('1'),
+		int('2'),
+		int('3'),
+		int('4')
+	};
+	bool keyPressed[4] = { 0 };
+
 	Table background(WIDTH,HEIGHT, 1);
 
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "SFML works!");
@@ -27,9 +47,74 @@ int main()
 	float freq = 1000000000.0f / UPDATE_RATE;
 	float unprocessed = 0;
 	auto timer = steady_clock::now();
+	int currentMenu = 0;
+	bool runSimulation = true;
     while (window.isOpen())
     {
 		
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape))
+		{
+
+			system("cls");
+			std::cout << "Menu\n1. Edit current ball.\n2. Change physic values.\n3. Change cue angle.\n4. Run Simulation.\n";
+			currentMenu = 0;
+			std::cin >> currentMenu;
+			switch (currentMenu)
+			{
+			case 1:
+			{
+				int selectIndex = 0;
+
+				Ball* currentBall = &background.getCurrentBall();
+				glm::vec2 pos(0.0f);
+				glm::vec2 vel(0.0f);
+				float tempValue = 0;
+				while (selectIndex != 4)
+				{
+					system("cls");
+
+					std::cout << "Edit ball\n";
+					std::cout << "1. Position:\t(" << currentBall->getPosition().x << "," << currentBall->getPosition().y << ")\n";
+					std::cout << "2. Velocity:\t(" << currentBall->getVelocity().x << "," << currentBall->getVelocity().y << ")\n";
+					std::cout << "2. Mass:\t" << currentBall->getMass() << "\n";
+					std::cout << "4. Back\nValue: ";
+					std::cin >> selectIndex;
+
+					switch (selectIndex)
+					{
+					case 1:
+
+						std::cout << "Position.x = ";
+						std::cin >> tempValue;
+						pos.x = tempValue;
+						std::cout << "Position.y = ";
+						std::cin >> tempValue;
+						pos.y = tempValue;
+						std::cin.ignore();
+						currentBall->setPosition(pos);
+						break;
+					case 2:
+
+						std::cout << "Veloctiy.x = ";
+						std::cin >> tempValue;
+						vel.x = tempValue;
+						std::cout << "Veloctiy.y = ";
+						std::cin >> tempValue;
+						vel.y = tempValue;
+						std::cin.ignore();
+						currentBall->setVelocity(vel);
+						break;
+					}
+				}
+
+
+
+			}
+			break;
+			
+			}
+			lastTime = steady_clock::now();
+		}
         sf::Event event;
         while (window.pollEvent(event))
         {
@@ -45,7 +130,16 @@ int main()
 		{
 			updates++;
 			unprocessed -= 1;
-			background.update(window);
+			static float dt2 = 0.0f;
+			dt2 += 0.01f;
+			background.update(window, dt2);
+
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			{
+				sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+				background.setCurrentBall(mousePos.x, mousePos.y);
+			}
+			
 		}
         window.clear();
 		

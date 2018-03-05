@@ -37,7 +37,7 @@ Ball::Ball(glm::vec2 position)
 
 		m_velocity = glm::vec2(0, 0);
 		m_mass = 50;
-		m_angleVelocity = glm::vec3(0.0000000050f, 0.0000000010f, 0.0000000010f);
+		m_angleVelocity = glm::vec3(0.00050f, 0.0f, 0.0f);
 }
 
 Ball::~Ball()
@@ -90,7 +90,7 @@ float Ball::getRadius() const
 	return m_radius;
 }
 
-sf::CircleShape Ball::getShape()
+sf::CircleShape& Ball::getShape()
 {
 	return m_shape;
 }

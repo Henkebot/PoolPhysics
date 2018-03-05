@@ -34,7 +34,7 @@ public:
 	glm::vec2 getPosition() const; 
 	float getMass(); 
 	float getRadius() const;
-	sf::CircleShape getShape(); 
+	sf::CircleShape& getShape(); 
 	glm::vec3 getAngleVelocity() const;
 
 

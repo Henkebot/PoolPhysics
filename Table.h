@@ -28,10 +28,15 @@ private:
 	std::vector<Hole> m_Holes;
 	std::vector<Ball> m_Balls;
 
+	int currentBallIndex;
+
 public:
 	Table(int width, int height, float scale);
 
-	void update(const sf::Window& window);
+	void update(const sf::Window& window, float dt);
+
+	Ball& getCurrentBall();
+	void setCurrentBall(int windowX, int windowY);
 
 	~Table(); 
 
@@ -44,7 +49,7 @@ private:
 	
 	void _checkBounds(Ball& ball);
 	void _move(Ball& ball);
-	glm::vec2 _calculateVel(Ball& ball);
+	glm::vec2 _calculateVel(Ball& ball, float dt);
 	void _collision(Ball& ball1, Ball& ball2);
 };
 

@@ -35,9 +35,9 @@ Ball::Ball(glm::vec2 position)
 		
 		m_position = position;
 
-		m_velocity = glm::vec2(0, 0);
+		m_velocity = glm::vec2(2, 2);
 		m_mass = 50;
-		m_angleVelocity = glm::vec3(0.0f, 0.0f, 0.0f);
+		m_angleVelocity = glm::vec3(0.0f, 0.0f, -0.001f);
 }
 
 Ball::~Ball()

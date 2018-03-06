@@ -48,8 +48,7 @@ void Table::update(const sf::Window& window, float dt)
 		{
 			sf::Mouse mouse;
 			sf::Vector2i lol = mouse.getPosition(window);
-			m_Balls[currentBallIndex].setVelocity(glm::normalize(glm::vec2(lol.x, lol.y) - m_Balls.back().getPosition()) * 25.0f);
-			m_Balls[currentBallIndex].setAngleVelocity(glm::vec3(0.001f, 0.001f, 0));
+			m_Balls[currentBallIndex].setVelocity((glm::vec2(lol.x, lol.y) - m_Balls.back().getPosition()) / 10.0f);
 		}
 		_move(ball);
 	}
@@ -106,12 +105,12 @@ void Table::_initBalls()
 	glm::vec2 dir2(1, 1);
 	int startX = m_Width - (m_Width * m_Scale.x * 0.85f);
 	int startY = m_Height - (m_Height * m_Scale.y * 0.5f);
-	for (int i = 0; i < 5; i++)
+	for (int i = 0; i < 1; i++)
 	{
 		
 		glm::vec2 start(dir * float(i) * 40.0f);
 
-		for (int j = 0; j < 5 - i; j++)
+		for (int j = 0; j < 2 - i; j++)
 		{
 			glm::vec2 start2(dir2 * float(j) * 40.0f);
 			glm::vec2 direction = (start + start2);
@@ -192,28 +191,16 @@ void Table::_move(Ball & ball)
 glm::vec2 Table::_calculateVel(Ball & ball, float dt)
 {
 
-	glm::vec2 initialVel = glm::vec2(ball.getVelocity().x, ball.getVelocity().y);
-	glm::vec2 frictionForce = -(initialVel*-(0.2f * -(ball.getMass()*9.82f * 0.01f)));
-	glm::vec2 frictionForceAngular = -(glm::vec2(ball.getAngleVelocity())*-(0.2f * -(ball.getMass()*9.82f * 0.01f)));
-	//frictionForce = glm::vec2(0.0f, 0.0f);
-	glm::vec3 temp = glm::vec3((pow(M_PI, 2) * pow(ball.getRadius(), 3) * density) * ball.getAngleVelocity().x, (pow(M_PI, 2) * pow(ball.getRadius(), 3) * density) * ball.getAngleVelocity().y, (pow(M_PI, 2) * pow(ball.getRadius(), 3) * density) * ball.getAngleVelocity().z);
-	glm::vec3 magnusEffectForce = glm::cross(temp, glm::vec3(initialVel,0));
-	glm::vec3 angular = ball.getAngleVelocity() * ball.getRadius();
-	glm::vec2 finalForce = glm::vec2(frictionForce);
+	glm::vec2 frictionForce = -(ball.getVelocity()*-(0.2f * -(ball.getMass()*9.82f * 0.01f)));
+	
+	glm::vec3 magnusEffect = glm::cross((0.1f * 0.5f * M_PI * ball.getRadius() *ball.getRadius() * glm::length(ball.getVelocity()) * 0.5f) * ball.getAngleVelocity(), glm::vec3(ball.getVelocity(),0.0f));
 
-	/*if (glm::length(ball.getVelocity()) > 0)
-		__debugbreak();
-*/
+ 	glm::vec2 finalForce = glm::vec2(frictionForce.x + magnusEffect.x, frictionForce.y + magnusEffect.y);
 
-	glm::vec2 spin = glm::vec2(ball.getAngleVelocity()) * ball.getRadius();
-
-	// F = A * M
-	// V = v + spin + a*t
-	glm::vec2 finalVel =spin+  ball.getVelocity() + (finalForce / ball.getMass());
+	glm::vec2 finalVel = ball.getVelocity() + (finalForce / ball.getMass());
 	
 	ball.setVelocity(finalVel);
 
-	
 	return finalVel;
 }
 #define MU_BALL 0.1f
@@ -235,10 +222,10 @@ void Table::_collision(Ball & ball1, Ball & ball2)
 	//ball2.setVelocity(v2);
 
 	// Källa Formelblad - Roterande objekt
-	/*glm::vec2 n = glm::normalize(ball1.getPosition() - ball2.getPosition());
+	glm::vec2 n = glm::normalize(ball1.getPosition() - ball2.getPosition());
 	glm::vec3 n3 = glm::vec3(n, 0.0f);
-	glm::vec3 b1p3 = glm::vec3(ball1.getPosition(), ball1.getRadius());
-	glm::vec3 b2p3 = glm::vec3(ball2.getPosition(), ball2.getRadius());
+	glm::vec3 b1p3 = glm::vec3(0, 0, 1);
+	glm::vec3 b2p3 = glm::vec3(0, 0, 1);
 	glm::vec3 b1l;
 	b1l.x = 0.25f*ball1.getMass()* ball1.getRadius() *ball1.getRadius();
 	b1l.y = 0.25f*ball1.getMass()* ball1.getRadius() *ball1.getRadius();
@@ -247,7 +234,7 @@ void Table::_collision(Ball & ball1, Ball & ball2)
 	glm::vec3 b2l;
 	b2l.x = 0.25f*ball2.getMass()* ball2.getRadius() *ball2.getRadius();
 	b2l.y = 0.25f*ball2.getMass()* ball2.getRadius() *ball2.getRadius();
-	b2l.z = 0.5 * ball2.getMass() * ball2.getRadius() *ball2.getRadius();
+	b2l.z = (5.0f/2.0f) * ball2.getMass() * ball2.getRadius() *ball2.getRadius();
 	float vr = glm::dot(ball1.getVelocity() - ball2.getVelocity(), n);
 
 	float nom = (e + 1) * vr;
@@ -257,19 +244,19 @@ void Table::_collision(Ball & ball1, Ball & ball2)
 	float mr = (1 / ball1.getMass()) + (1 / ball2.getMass());
 	float denom = mr + rot1 + rot2;
 
-	float j = -(nom / denom) * 30.0f;
+	float j = -(nom / denom);
 
 
 	glm::vec2 v1 = ball1.getVelocity() + (j / ball1.getMass())*n;
 	glm::vec2 v2 = ball2.getVelocity() - (j / ball2.getMass())*n;
-	glm::vec3 w1 = ball1.getAngleVelocity() + (glm::cross(b1p3, (j/30.0f)*n3) / b1l.z);
-	glm::vec3 w2 = ball2.getAngleVelocity() + (glm::cross(b2p3, (j / 30.0f)*n3) / b2l.z);
+	glm::vec3 w1 = ball1.getAngleVelocity() + (glm::cross(b1p3, j*n3) / b1l.z);
+	glm::vec3 w2 = ball2.getAngleVelocity() + (glm::cross(b2p3, j*n3) / b2l.z);
 
 	ball1.setVelocity(v1);
 	ball2.setVelocity(v2);
 
 	ball1.setAngleVelocity(w1);
-	ball1.setAngleVelocity(w2);*/
+	ball1.setAngleVelocity(w2);
 
 	// Källa http://archive.ncsa.illinois.edu/Classes/MATH198/townsend/public/illiPool.c
 	/*glm::vec2 normVec = glm::normalize(ball1.getPosition() - ball2.getPosition());
@@ -298,32 +285,32 @@ void Table::_collision(Ball & ball1, Ball & ball2)
 	ball2.setAngleVelocity(ball2.getAngleVelocity() + dw2);*/
 
 	// Källa Elastiska kollisioner (Formelblad) + lite ändrat
-	glm::vec2 gWhiteDir = (glm::vec2(ball1.getVelocity().x, ball1.getVelocity().y));
-	glm::vec2 gYellowDir = (glm::vec2(ball2.getVelocity().x, ball2.getVelocity().y));
+	//glm::vec2 gWhiteDir = (glm::vec2(ball1.getVelocity().x, ball1.getVelocity().y));
+	//glm::vec2 gYellowDir = (glm::vec2(ball2.getVelocity().x, ball2.getVelocity().y));
 
-	glm::vec2 gWhitePos = glm::vec2(ball1.getPosition().x, ball1.getPosition().y);
-	glm::vec2 gYellowPos = glm::vec2(ball2.getPosition().x, ball2.getPosition().y);
+	//glm::vec2 gWhitePos = glm::vec2(ball1.getPosition().x, ball1.getPosition().y);
+	//glm::vec2 gYellowPos = glm::vec2(ball2.getPosition().x, ball2.getPosition().y);
 
-	glm::vec2 d = glm::normalize(gWhitePos - gYellowPos);
+	//glm::vec2 d = glm::normalize(gWhitePos - gYellowPos);
 
-	glm::vec2 WhiteV0 = glm::dot(gWhiteDir, d) * d;
-	glm::vec2 YellowV0 = glm::dot(gYellowDir, d) * d;
+	//glm::vec2 WhiteV0 = glm::dot(gWhiteDir, d) * d;
+	//glm::vec2 YellowV0 = glm::dot(gYellowDir, d) * d;
 
-	float WhiteMass = ball1.getMass();
-	float YellowMass = ball2.getMass();
+	//float WhiteMass = ball1.getMass();
+	//float YellowMass = ball2.getMass();
 
-	glm::vec2 WhiteV1 = (WhiteV0*(WhiteMass - (YellowMass*e)) + (YellowMass * YellowV0 *(1 + e))) / (WhiteMass + YellowMass);
-	glm::vec2 YellowV1 = (YellowV0*(YellowMass - (WhiteMass*e)) + (WhiteMass*WhiteV0*(1 + e))) / (WhiteMass + YellowMass);
+	//glm::vec2 WhiteV1 = (WhiteV0*(WhiteMass - (YellowMass*e)) + (YellowMass * YellowV0 *(1 + e))) / (WhiteMass + YellowMass);
+	//glm::vec2 YellowV1 = (YellowV0*(YellowMass - (WhiteMass*e)) + (WhiteMass*WhiteV0*(1 + e))) / (WhiteMass + YellowMass);
 
-	glm::vec2 WhiteFinal = gWhiteDir - WhiteV0 + WhiteV1;
-	glm::vec2 YellowFinal = gYellowDir - YellowV0 + YellowV1;
+	//glm::vec2 WhiteFinal = gWhiteDir - WhiteV0 + WhiteV1;
+	//glm::vec2 YellowFinal = gYellowDir - YellowV0 + YellowV1;
 
-	// Bara överför vinkelhastigheterna
-	ball1.setAngleVelocity(-ball2.getAngleVelocity());
-	ball2.setAngleVelocity(-ball1.getAngleVelocity());
+	//// Bara överför vinkelhastigheterna
+	//ball1.setAngleVelocity(-ball2.getAngleVelocity());
+	//ball2.setAngleVelocity(-ball1.getAngleVelocity());
 
-	ball1.setVelocity(WhiteFinal);
-	ball2.setVelocity(YellowFinal);
+	//ball1.setVelocity(WhiteFinal);
+	//ball2.setVelocity(YellowFinal);
 	
 
 }

@@ -3,7 +3,7 @@
 #include <SFML\Graphics.hpp>
 #include <glm.hpp>
 #define _USE_MATH_DEFINES
-#define M_PI 3.141592
+#define M_PI 3.141592f
 #include <vector>
 #include "Hole.h"
 #include "Ball.h"

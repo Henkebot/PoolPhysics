@@ -49,6 +49,7 @@ int main()
 	auto timer = steady_clock::now();
 	int currentMenu = 0;
 	bool runSimulation = true;
+	double t2 = 0.0f;
     while (window.isOpen())
     {
 		
@@ -167,13 +168,28 @@ int main()
 		unprocessed += dt / freq;
 		lastTime = current_time;
 
+
 		while (unprocessed > 1)
 		{
 			updates++;
 			unprocessed -= 1;
-			static float dt2 = 0.0f;
-			dt2 += 0.0001f;
-			background.update(window, dt2);
+			float dt2 = 1.0f;
+			
+
+			
+			/*if (t2 == 0.0f || t2 == (dt2 * 6) || t2 == 2 * (dt2 * 6) || t2 == 3 * (dt2 * 6) || t2 == 4.0f || t2 == 5 || t2 == 6 || t2 == 7 || t2 == 8 || t2 == 9 || t2 == 10 || t2 == 11 )
+			{
+				std::cout << "t " << t2 << std::endl;
+				std::cout << "pos X" << background.getCurrentBall().getPosition().x <<  ", pos Y" << background.getCurrentBall().getPosition().y << std::endl;
+				std::cout << "Vel X" << background.getCurrentBall().getVelocity().x <<  ", Vel Y" << background.getCurrentBall().getVelocity().y << std::endl;
+			}*/
+
+
+			t2 += dt2;
+
+			if (t2 >= 150) return 0;
+
+			background.update(window,t2, dt2);
 
 			if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 			{

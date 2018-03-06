@@ -56,7 +56,7 @@ int main()
 		{
 
 			system("cls");
-			std::cout << "Menu\n1. Edit current ball.\n2. Change physic values.\n3. Change cue angle.\n4. Run Simulation.\n";
+			std::cout << "Menu\n1. Edit current ball.\n2. Change physic values.\n3. Change cue angle.\n4. Run Simulation.\nEnter value: ";
 			currentMenu = 0;
 			std::cin >> currentMenu;
 			switch (currentMenu)
@@ -75,8 +75,8 @@ int main()
 
 					std::cout << "Edit ball\n";
 					std::cout << "1. Position:\t(" << currentBall->getPosition().x << "," << currentBall->getPosition().y << ")\n";
-					std::cout << "2. Velocity:\t(" << currentBall->getVelocity().x << "," << currentBall->getVelocity().y << ")\n";
-					std::cout << "2. Mass:\t" << currentBall->getMass() << "\n";
+					std::cout << "2. Velocity:\t(" << currentBall->getVelocity().x << "," << currentBall->getVelocity().y << "), " << glm::length(currentBall->getVelocity()) << " ms/s\n";
+					std::cout << "3. Mass:\t" << currentBall->getMass() << " Kg\n";
 					std::cout << "4. Back\nValue: ";
 					std::cin >> selectIndex;
 
@@ -104,6 +104,13 @@ int main()
 						std::cin.ignore();
 						currentBall->setVelocity(vel);
 						break;
+					case 3:
+						std::cout << "Mass = ";
+						std::cin >> tempValue;
+						vel.y = tempValue;
+						std::cin.ignore();
+						currentBall->setMass(vel.y);
+						break;
 					}
 				}
 
@@ -111,6 +118,40 @@ int main()
 
 			}
 			break;
+			case 2:
+			{
+				int selectIndex = 0;
+
+				float eValue = background.getE();
+				float frictionValue = background.getFriction();
+				float tempValue = 0.0f;
+				while (selectIndex != 3)
+				{
+					system("cls");
+					std::cout << "Physics\n";
+					std::cout << "1. Elastic constant: " << eValue << "\n";
+					std::cout << "2. Friciton constant: " << frictionValue << "\n";
+					std::cout << "3. Back\n";
+					std::cout << "Value: ";
+					std::cin >> selectIndex;
+					std::cin.ignore();
+						switch (selectIndex)
+						{
+						case 1:
+							std::cout << "Elastic constant = ";
+							std::cin >> tempValue;
+							background.setE(tempValue);
+							eValue = background.getE();
+							break;
+						case 2:
+							std::cout << "Friciton constant = ";
+							std::cin >> tempValue;
+							background.setFriction(tempValue);
+							frictionValue = background.getFriction();
+							break;
+						}
+				}
+			}break;
 			
 			}
 			lastTime = steady_clock::now();
@@ -131,7 +172,7 @@ int main()
 			updates++;
 			unprocessed -= 1;
 			static float dt2 = 0.0f;
-			dt2 += 0.01f;
+			dt2 += 0.0001f;
 			background.update(window, dt2);
 
 			if (sf::Mouse::isButtonPressed(sf::Mouse::Left))

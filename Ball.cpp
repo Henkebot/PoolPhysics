@@ -26,7 +26,7 @@ Ball::Ball(glm::vec2 position)
 {
 
 		m_radius = 25; 
-		m_mass = 50;
+		m_mass = 50.0f;
 
 		m_shape = sf::CircleShape(m_radius);
 		m_shape.setOrigin(m_radius, m_radius);
@@ -80,6 +80,11 @@ void Ball::setAngleVelocity(glm::vec3 angleVelocity)
 	m_angleVelocity = angleVelocity; 
 }
 
+void Ball::setAcceleration(glm::vec3 acceleration)
+{
+	m_acceleration = acceleration;
+}
+
 
 float Ball::getMass() 
 {
@@ -99,5 +104,10 @@ sf::CircleShape& Ball::getShape()
 glm::vec3 Ball::getAngleVelocity() const
 {
 	return m_angleVelocity; 
+}
+
+glm::vec3 Ball::getAcceleration() const
+{
+	return m_acceleration;
 }
 

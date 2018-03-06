@@ -18,6 +18,7 @@ private:
 	glm::vec2 m_velocity; 
 	glm::vec3 m_angleVelocity; 
 
+
 	void draw(sf::RenderTarget& renderTarget, sf::RenderStates states) const;
 
 public:
@@ -28,7 +29,8 @@ public:
 	void setPosition(glm::vec2 position); 
 	void setVelocity(glm::vec2 velocity); 
 	void setMass(float mass); 
-	void setAngleVelocity(glm::vec3 angleVelocity); 
+	void setAngleVelocity(glm::vec3 angleVelocity);
+
 
 	glm::vec2 getVelocity(); 
 	glm::vec2 getPosition() const; 
@@ -36,7 +38,7 @@ public:
 	float getRadius() const;
 	sf::CircleShape& getShape(); 
 	glm::vec3 getAngleVelocity() const;
-
+ 
 
 };
 

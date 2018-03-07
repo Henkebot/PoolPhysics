@@ -85,6 +85,13 @@ void Ball::setAcceleration(glm::vec3 acceleration)
 	m_acceleration = acceleration;
 }
 
+void Ball::setRadius(float radius)
+{
+	m_radius = radius;
+	m_shape.setRadius(m_radius);
+	m_shape.setOrigin(sf::Vector2f(m_radius, m_radius));
+}
+
 
 float Ball::getMass() 
 {

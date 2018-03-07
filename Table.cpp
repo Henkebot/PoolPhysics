@@ -25,7 +25,9 @@ Table::Table(int width, int height, float scale)
 	: m_Width(width), m_Height(height)
 {
 	m_E = 1.0f;
-	m_Friction = 0.2f;
+	m_Friction = 0.4f;
+	m_EdgeElastic = 0.8f;
+	m_RunSimulation = false;
 
 	m_Scale = glm::vec2(scale);
 	m_position = glm::vec2(m_Width - m_Width * m_Scale.x, 0);
@@ -37,12 +39,7 @@ Table::Table(int width, int height, float scale)
 	m_sprite.setPosition(m_position.x, m_position.y);
 	m_sprite.scale(m_Scale.x, m_Scale.y);
 
-	m_stepFunction =Euler ;
-
-	m_dataOut.open("Results.txt");
-	const char* method = (m_stepFunction == Euler) ? "Euler\n" : "RK4\n";
-	m_dataOut << method;
-	m_dataOut << "T\tVelocity\tAngleVelocity\tAcceleration\n";
+	m_stepFunction = Euler;
 
 	_initHoles();
 	_initBalls();
@@ -50,11 +47,8 @@ Table::Table(int width, int height, float scale)
 
 void Table::update(const sf::Window& window, double t, float dt)
 {
-	int collision = -1;
-
 	for (int i = 0; i < m_Balls.size(); i++)
 	{
-	
 
 		_checkBounds(m_Balls[i]);
 		
@@ -62,48 +56,62 @@ void Table::update(const sf::Window& window, double t, float dt)
 		{
 			sf::Mouse mouse;
 			sf::Vector2i lol = mouse.getPosition(window);
-			m_Balls[currentBallIndex].setVelocity((glm::vec2(lol.x, lol.y) - m_Balls[currentBallIndex].getPosition()) / 10.0f);
+			if(currentBallIndex >= 0)m_Balls[currentBallIndex].setVelocity((glm::vec2(lol.x, lol.y) - m_Balls[currentBallIndex].getPosition()) / 10.0f);
 		}
 		if (m_stepFunction == Euler)
 		{
-			collision = _move(m_Balls[i], dt);
+			if (m_RunSimulation)
+			{
+				_move(m_Balls[i], t + dt);
+			}
+			else
+			{
+				_move(m_Balls[i], dt);
+
+			}
 		}
 		else
 		{
-			collision = integrate(m_Balls[i], t, dt);
-		}
-
-		/*for (auto& hole : m_Holes)
-		{
-			if (hole.collision(m_Balls[i]))
+			if (m_RunSimulation)
 			{
-				if (m_Balls.size() > 1)
+				_integrate(m_Balls[i],t, dt);
+			}
+			else
+			{
+				_integrate(m_Balls[i], t, dt);
+			}
+		}
+		if (!m_RunSimulation)
+		{
+			
+			for (auto& hole : m_Holes)
+			{
+				if (hole.collision(m_Balls[i]))
 				{
 					m_Balls.erase(m_Balls.begin() + i);
-				}
-				else
-				{
-					m_Balls.erase(m_Balls.begin());
-				}
 					
-				if (currentBallIndex >= m_Balls.size()) currentBallIndex--;
+					if(--currentBallIndex >= 0)
+					{
+						m_Balls[currentBallIndex].getShape().setOutlineColor(sf::Color::Black);
+						m_Balls[currentBallIndex].getShape().setOutlineThickness(5.0f);
+					}
+					
+				}
 				
 			}
-		}*/
+			
+			
+		}
+		
 	}
-
-
+	
 	if (m_dataOut.is_open())
 	{
 		m_dataOut.imbue(std::locale(m_dataOut.getloc(), new punct_facet<char, ','>));
-		m_dataOut << t << "\t";
+		m_dataOut << t + dt << "\t";
 		m_dataOut << glm::length(m_Balls[0].getVelocity()) << "\t";
 		m_dataOut << glm::length(m_Balls[0].getAngleVelocity()) << "\t";
 		m_dataOut << glm::length(m_Balls[0].getAcceleration()) << "\t";
-		if (collision == -1)
-			m_dataOut << std::endl;
-		else
-			m_dataOut << "1" << std::endl;
 
 	}
 	
@@ -127,14 +135,45 @@ void Table::setCurrentBall(int windowX, int windowY)
 		}
 
 	}
+	if (currentBallIndex >= 0)
+	{
+		m_Balls[currentBallIndex].getShape().setOutlineColor(sf::Color::Black);
+		m_Balls[currentBallIndex].getShape().setOutlineThickness(5.0f);
 
-	m_Balls[currentBallIndex].getShape().setOutlineColor(sf::Color::Black);
-	m_Balls[currentBallIndex].getShape().setOutlineThickness(5.0f);
+	}
 }
 
 void Table::setStepFunction(StepType stepFunction)
 {
 	m_stepFunction = stepFunction; 
+}
+
+void Table::runSimulation(StepType type)
+{
+	m_Balls.clear();
+	m_Balls.push_back(Ball(glm::vec2(m_Width * 0.1f, m_Height * 0.5f)));
+	m_Balls[0].setVelocity(glm::vec2(50, 0));
+	m_Balls[0].setAngleVelocity(glm::vec3(0, 0,0.001f));
+	m_Balls.push_back(Ball(glm::vec2(m_Width * 0.9f, m_Height * 0.5f)));
+
+	currentBallIndex = 0;
+	m_stepFunction = type;
+
+
+	m_dataOut.open("Results.txt");
+	const char* method = (m_stepFunction == Euler) ? "Euler\n" : "RK4\n";
+	m_dataOut << method;
+	m_dataOut << "T\tVelocity\tAngleVelocity\tAcceleration\n";
+
+	m_RunSimulation = true;
+	
+}
+
+void Table::stopSimulation()
+{
+	m_Balls.clear();
+	_initBalls();
+	m_RunSimulation = false;
 }
 
 Table::StepType Table::getStepFunction()
@@ -152,6 +191,11 @@ void Table::setFriction(float friction)
 	m_Friction = glm::clamp(friction, 0.0f, 1.0f);
 }
 
+void Table::setEdgeFriciton(float edgeElastic)
+{
+	m_EdgeElastic = edgeElastic;
+}
+
 float Table::getE() const
 {
 	return m_E;
@@ -160,6 +204,16 @@ float Table::getE() const
 float Table::getFriction() const
 {
 	return m_Friction;
+}
+
+float Table::getEdgeFriciton() const
+{
+	return m_EdgeElastic;
+}
+
+bool Table::isSimulating() const
+{
+	return m_RunSimulation;
 }
 
 Table::~Table()
@@ -186,28 +240,26 @@ void Table::_initBalls()
 {
 	glm::vec2 dir(1, -1);
 	glm::vec2 dir2(1, 1);
-	int startX = m_Width - (m_Width * m_Scale.x * 0.85f);
+	int startX = m_Width - (m_Width * m_Scale.x * 0.35f);
 	int startY = m_Height - (m_Height * m_Scale.y * 0.5f);
 	for (int i = 0; i < 5; i++)
 	{
 		
-		glm::vec2 start(dir * float(i) * 50.0f);
+		glm::vec2 start(dir * float(i) * 40.0f);
 
 		for (int j = 0; j < 5 - i; j++)
 		{
-			glm::vec2 start2(dir2 * float(j) * 50.0f);
+			glm::vec2 start2(dir2 * float(j) * 40.0f);
 			glm::vec2 direction = (start + start2);
 			direction.x += startX;
 			direction.y += startY;
 			m_Balls.push_back(Ball(direction));
 		}
 	}
+
+	m_Balls.push_back(Ball(glm::vec2(m_Width * 0.3f, m_Height * 0.5f)));
 	
-	/*m_Balls.push_back(Ball(glm::vec2(m_Width * 0.1f, m_Height * 0.5f)));
-	m_Balls[0].setVelocity(glm::vec2(50, 0));
-	m_Balls[0].setAngleVelocity(glm::vec3(0, 0,0.001f));
-	m_Balls.push_back(Ball(glm::vec2(m_Width * 0.9f, m_Height * 0.5f)));
-*/
+	
 	currentBallIndex = m_Balls.size() - 1;
 	m_Balls[currentBallIndex].getShape().setOutlineColor(sf::Color::Black);
 	m_Balls[currentBallIndex].getShape().setOutlineThickness(5.0f);
@@ -223,23 +275,37 @@ void Table::_checkBounds(Ball & ball)
 	int startX = m_Width - m_Width * m_Scale.x;
 	int endY = m_Height * m_Scale.y;
 
+	glm::vec2 collided(0,0);
+
 	if ((ball.getPosition().x + ball.getRadius()) > m_Width - EDGE_WIDTH && ball.getVelocity().x > 0)
 	{
-		ball.setVelocity(glm::vec2(ball.getVelocity().x * -1, ball.getVelocity().y));
+		collided = glm::vec2(-1, 0);
 	}
 	else if ((ball.getPosition().x - ball.getRadius()) < startX + EDGE_WIDTH && ball.getVelocity().x < 0)
 	{
-		ball.setVelocity(glm::vec2(ball.getVelocity().x * -1, ball.getVelocity().y));
+		collided = glm::vec2(1, 0);
 	}
 
 	if ((ball.getPosition().y + ball.getRadius()) > m_Height - 40 && ball.getVelocity().y > 0)
 	{
-		ball.setVelocity(glm::vec2(ball.getVelocity().x, ball.getVelocity().y * -1));
+		
+		collided = glm::vec2(0, -1);
 	}
 	else if ((ball.getPosition().y - ball.getRadius() < EDGE_WIDTH) && ball.getVelocity().y < 0)
 	{
-		ball.setVelocity(glm::vec2(ball.getVelocity().x, ball.getVelocity().y * -1));
+		collided = glm::vec2(0, 1);
 	}
+
+	
+	if (glm::length(collided) > 0)
+	{
+
+		glm::vec2 velocity = ball.getVelocity();
+		glm::vec2 relfectVec = velocity - 2.0f * glm::dot(collided, velocity) * collided;
+		relfectVec *= m_EdgeElastic;
+		ball.setVelocity(relfectVec);
+	}
+
 }
 
 int Table::_move(Ball & ball, float dt)
@@ -247,8 +313,8 @@ int Table::_move(Ball & ball, float dt)
 
 	int collisionId = -1;
 
-	glm::vec2 nextVel = ball.getVelocity() + _calculateVel(ball,dt);
-	glm::vec2 nextPos = ball.getPosition() + nextVel;
+	glm::vec2 nextVel = ball.getVelocity() + _acceleration(ball,dt);
+	glm::vec2 nextPos = ball.getPosition() + nextVel * dt;
 			
 	for (int j = 0; j < m_Balls.size(); j++)
 	{
@@ -256,13 +322,15 @@ int Table::_move(Ball & ball, float dt)
 
 		float distanceBet = glm::length(m_Balls[j].getPosition() - nextPos) - (ball.getRadius() + m_Balls[j].getRadius());
 
-		if (distanceBet < 0)
+		if (distanceBet < 0.0f)
 		{
-			glm::vec2 colliisonVector = glm::normalize(m_Balls[j].getPosition() - nextPos) * (distanceBet / 2.0f);
-			ball.setPosition(-colliisonVector + ball.getPosition());
-			m_Balls[j].setPosition(colliisonVector + m_Balls[j].getPosition());
+			glm::vec2 colliisonVector = glm::normalize(m_Balls[j].getPosition() - nextPos) * (distanceBet/2.0f);
+			
+			ball.setPosition(colliisonVector + ball.getPosition());
+			m_Balls[j].setPosition(-colliisonVector + m_Balls[j].getPosition());
 
 			_collision(ball, m_Balls[j]);
+			
 			collisionId = j;
 		}
 	}
@@ -272,22 +340,13 @@ int Table::_move(Ball & ball, float dt)
 		ball.setVelocity(nextVel);
 	}
 
-
-	
-	
-	
-	
-
 	return collisionId;
 }
-#define MU_SLIDE 0.1f
+
 glm::vec2 Table::_calculateVel(Ball & ball, float dt)
-{
-	static int tVal = 0;
-	std::cout << "T:" << tVal++ << " " << dt << std::endl;
-
-	glm::vec2 frictionForce = -m_Friction * ball.getVelocity() * ball.getMass() * 9.82f * 0.01f;
-
+{	
+	glm::vec2  frictionForce = m_Friction * -ball.getVelocity();
+	
 	glm::vec3 magnusEffect = glm::cross((0.1f * 0.5f * M_PI * ball.getRadius() *ball.getRadius() * glm::length(ball.getVelocity()) * 0.5f) * ball.getAngleVelocity(), glm::vec3(ball.getVelocity(),0.0f));
 
  	glm::vec2 finalForce = glm::vec2(frictionForce.x + magnusEffect.x, frictionForce.y + magnusEffect.y);
@@ -296,9 +355,7 @@ glm::vec2 Table::_calculateVel(Ball & ball, float dt)
 
 	ball.setAcceleration(glm::vec3(acceleration, 0.0f));
 
-	glm::vec2 finalVel = acceleration;
-
-	return finalVel;
+	return acceleration;
 }
 #define MU_BALL 0.1f
 void Table::_collision(Ball & ball1, Ball & ball2)
@@ -342,44 +399,40 @@ void Table::_collision(Ball & ball1, Ball & ball2)
 	ball1.setAngleVelocity(w2);
 }
 
-Table::Derivative Table::evaluate(Ball& initial, double t, float dt, const Derivative & d)
+Table::Derivative Table::_evaluate(Ball& initial, float t, float dt)
 {
 	Ball ball = initial;
 
 	Derivative output;
-	output.dx = ball.getVelocity();
-	output.dv = acceleration(ball, t + dt);
+	output.dx = ball.getVelocity() * ((m_RunSimulation) ? t+dt : 1.0f);
+	output.dv = _acceleration(ball, t + dt);
+
 	return output;
 }
 
-glm::vec2 Table::acceleration(Ball & ball, float t)
+glm::vec2 Table::_acceleration(Ball & ball, float t)
 {
-	static int tVal = 0;
-	std::cout << "T:" << tVal++ << " " << t << std::endl;
-	glm::vec2 frictionForce = -m_Friction * ball.getVelocity() * ball.getMass() * 9.82f * 0.01f;
+
+	glm::vec2 frictionForce = m_Friction * -ball.getVelocity();
 
 	glm::vec3 magnusEffect = glm::cross((0.1f * 0.5f * M_PI * ball.getRadius() *ball.getRadius() * glm::length(ball.getVelocity()) * 0.5f) * ball.getAngleVelocity(), glm::vec3(ball.getVelocity(), 0.0f));
 
 	glm::vec2 finalForce = glm::vec2(frictionForce.x + magnusEffect.x, frictionForce.y + magnusEffect.y);
 
-	glm::vec2 acceleration = (finalForce / ball.getMass());
+	glm::vec2 acceleration = (finalForce / ball.getMass()) * ((m_RunSimulation) ? t : 1.0f);
 
-	ball.setAcceleration(glm::vec3(acceleration, 0.0f));
-
-	glm::vec2 finalVel = acceleration;
-
-	return finalVel;
+	return acceleration;
 }
 
-int Table::integrate(Ball & ball, float t, float dt)
+int Table::_integrate(Ball & ball, float t, float dt)
 {
 
 	Derivative a, b, c, d;
 
-	a = evaluate(ball, t, 0.0f, Derivative());
-	b = evaluate(ball, t, dt*0.5f, a);
-	c = evaluate(ball, t, dt*0.5f, b);
-	d = evaluate(ball, t, dt, c);
+	a = _evaluate(ball, t, 0.0f);
+	b = _evaluate(ball, t, dt*0.2f);
+	c = _evaluate(ball, t, dt*0.7f);
+	d = _evaluate(ball, t, dt);
 
 	glm::vec2 dxdt = glm::vec2(1.0f / 6.0f *
 		(a.dx + 2.0f * (b.dx + c.dx) + d.dx));
@@ -390,12 +443,11 @@ int Table::integrate(Ball & ball, float t, float dt)
 
 	glm::vec2 oldVel = ball.getVelocity();
 
-	glm::vec2 newPos = ball.getPosition() + dxdt;
-	glm::vec2 newVel = ball.getVelocity() + dvdt ;
+	glm::vec2 newPos = ball.getPosition() + dxdt * dt;
+	glm::vec2 newVel = ball.getVelocity() + dvdt * dt;
 
 	bool collision = false;
-	
-	
+
 	for (int j = 0; j < m_Balls.size(); j++)
 	{
 		if (m_Balls[j].getPosition() == ball.getPosition()) continue;
@@ -405,8 +457,8 @@ int Table::integrate(Ball & ball, float t, float dt)
 		if (distanceBet < 0)
 		{
 			glm::vec2 colliisonVector = glm::normalize(m_Balls[j].getPosition() - newPos) * (distanceBet/2.0f);
-			ball.setPosition(-colliisonVector + ball.getPosition());
-			m_Balls[j].setPosition(colliisonVector + m_Balls[j].getPosition());
+			ball.setPosition(colliisonVector + ball.getPosition());
+			m_Balls[j].setPosition(-colliisonVector + m_Balls[j].getPosition());
 
 			_collision(ball, m_Balls[j]);
 			collision = true;

@@ -14,6 +14,12 @@
 
 class Table : public sf::Drawable
 {
+public:
+	enum StepType
+	{
+		Euler,
+		RK4
+	};
 private:
 	glm::vec2 m_position; 
 	sf::Texture m_texture; 
@@ -31,11 +37,7 @@ private:
 	std::vector<Ball> m_Balls;
 
 	int currentBallIndex;
-	enum StepType
-	{
-		Euler,
-		RK4
-	};
+	
 
 	struct State
 	{
@@ -46,7 +48,10 @@ private:
 	StepType m_stepFunction;
 
 	float m_E;
+	float m_EdgeElastic;
 	float m_Friction;
+
+	bool m_RunSimulation;
 
 
 public:
@@ -57,12 +62,20 @@ public:
 	Ball& getCurrentBall();
 	void setCurrentBall(int windowX, int windowY);
 	void setStepFunction(StepType stepFunction); 
+	void runSimulation(StepType type);
+	void stopSimulation();
 
-	StepType getStepFunction(); 
+	StepType getStepFunction();
+
 	void setE(float e);
 	void setFriction(float friction);
+	void setEdgeFriciton(float edgeElastic);
+
 	float getE() const;
 	float getFriction() const;
+	float getEdgeFriciton() const;
+
+	bool isSimulating() const;
 
 	~Table(); 
 
@@ -84,9 +97,9 @@ private:
 		glm::vec2 dv;      // dv/dt = acceleration
 	};
 
-	Derivative evaluate(Ball& state, double t, float dt, const Derivative &d);
-	glm::vec2 acceleration(Ball& ball, float t);
-	int integrate(Ball& ball, float t, float dt);
+	Derivative _evaluate(Ball& state, float t, float dt);
+	glm::vec2 _acceleration(Ball& ball, float t);
+	int _integrate(Ball& ball, float t, float dt);
 };
 #endif 
 

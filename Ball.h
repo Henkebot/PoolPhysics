@@ -32,7 +32,7 @@ public:
 	void setMass(float mass); 
 	void setAngleVelocity(glm::vec3 angleVelocity);
 	void setAcceleration(glm::vec3 acceleration);
-
+	void setRadius(float radius);
 
 	glm::vec2 getVelocity(); 
 	glm::vec2 getPosition() const; 

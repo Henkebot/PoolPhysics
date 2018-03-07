@@ -70,7 +70,7 @@ int main()
 				glm::vec2 pos(0.0f);
 				glm::vec2 vel(0.0f);
 				float tempValue = 0;
-				while (selectIndex != 4)
+				while (selectIndex != 5)
 				{
 					system("cls");
 
@@ -78,7 +78,8 @@ int main()
 					std::cout << "1. Position:\t(" << currentBall->getPosition().x << "," << currentBall->getPosition().y << ")\n";
 					std::cout << "2. Velocity:\t(" << currentBall->getVelocity().x << "," << currentBall->getVelocity().y << "), " << glm::length(currentBall->getVelocity()) << " ms/s\n";
 					std::cout << "3. Mass:\t" << currentBall->getMass() << " Kg\n";
-					std::cout << "4. Back\nValue: ";
+					std::cout << "4. Mass:\t" << currentBall->getRadius() << " m\n";
+					std::cout << "5. Back\nValue: ";
 					std::cin >> selectIndex;
 
 					switch (selectIndex)
@@ -112,6 +113,13 @@ int main()
 						std::cin.ignore();
 						currentBall->setMass(vel.y);
 						break;
+					case 4:
+						std::cout << "Radius = ";
+						std::cin >> tempValue;
+						vel.y = tempValue;
+						std::cin.ignore();
+						currentBall->setRadius(vel.y);
+						break;
 					}
 				}
 
@@ -125,14 +133,16 @@ int main()
 
 				float eValue = background.getE();
 				float frictionValue = background.getFriction();
+				float edgeFriciton = background.getEdgeFriciton();
 				float tempValue = 0.0f;
-				while (selectIndex != 3)
+				while (selectIndex != 4)
 				{
 					system("cls");
 					std::cout << "Physics\n";
 					std::cout << "1. Elastic constant: " << eValue << "\n";
 					std::cout << "2. Friciton constant: " << frictionValue << "\n";
-					std::cout << "3. Back\n";
+					std::cout << "3. Edge Friciton constant: " << edgeFriciton << "\n";
+					std::cout << "4. Back\n";
 					std::cout << "Value: ";
 					std::cin >> selectIndex;
 					std::cin.ignore();
@@ -150,9 +160,64 @@ int main()
 							background.setFriction(tempValue);
 							frictionValue = background.getFriction();
 							break;
+						case 3:
+							std::cout << "Edge Friction constant = ";
+							std::cin >> tempValue;
+							background.setEdgeFriciton(tempValue);
+							edgeFriciton = background.getEdgeFriciton();
+							break;
 						}
 				}
-			}break;
+			}
+			break;
+			case 3:
+			{
+				int selectIndex = 0;
+				float tempValue = 0.0f;
+				Ball* curBall = &background.getCurrentBall();
+				while (selectIndex != 3)
+				{
+					system("cls");
+					std::cout << "Spin!\n";
+					std::cout << "1. Left spin\n";
+					std::cout << "2. Right spin\n";
+					std::cout << "3. Back.\n\n";
+					std::cout << "Value: ";
+					std::cin >> selectIndex;
+					switch (selectIndex)
+					{
+					case 1:
+					{
+						std::cout << "0-10?\n";
+						std::cout << "Value: ";
+						std::cin >> tempValue;
+						tempValue = glm::clamp(tempValue, 0.0f, 10.0f);
+						curBall->setAngleVelocity(glm::vec3(0, 0, -tempValue * 0.0001f));
+					}
+					case 2:
+						std::cout << "1-10?\n";
+						std::cout << "Value: ";
+						std::cin >> tempValue;
+						tempValue = glm::clamp(tempValue, 0.0f, 10.0f);
+						curBall->setAngleVelocity(glm::vec3(0, 0, tempValue * 0.0001f));
+					break;
+					}
+				}
+				
+			}
+			break;
+			case 4:
+				int value = 0;
+				std::cout << "Run Simulation!\n";
+				std::cout << "1. Euler\n";
+				std::cout << "2. RK4\n";
+				std::cout << "3. Back\n";
+				std::cout << "Value: ";
+				std::cin >> value;
+				
+				background.runSimulation((value == 1) ? Table::StepType::Euler : Table::StepType::RK4);
+				t2 = 0.0f;
+				break;
 			
 			}
 			lastTime = steady_clock::now();
@@ -173,21 +238,13 @@ int main()
 		{
 			updates++;
 			unprocessed -= 1;
-			float dt2 = 1.0f;
-			
-
-			
-			/*if (t2 == 0.0f || t2 == (dt2 * 6) || t2 == 2 * (dt2 * 6) || t2 == 3 * (dt2 * 6) || t2 == 4.0f || t2 == 5 || t2 == 6 || t2 == 7 || t2 == 8 || t2 == 9 || t2 == 10 || t2 == 11 )
-			{
-				std::cout << "t " << t2 << std::endl;
-				std::cout << "pos X" << background.getCurrentBall().getPosition().x <<  ", pos Y" << background.getCurrentBall().getPosition().y << std::endl;
-				std::cout << "Vel X" << background.getCurrentBall().getVelocity().x <<  ", Vel Y" << background.getCurrentBall().getVelocity().y << std::endl;
-			}*/
+			float dt2 = 0.5f;
 
 
-			t2 += dt2;
+			t2 += 1.0f / UPDATE_RATE;
 
-		//	if (t2 > 200) return 0;
+			if(background.isSimulating())
+				if (t2 > 6.0f) background.stopSimulation();
 
 			background.update(window,t2, dt2);
 

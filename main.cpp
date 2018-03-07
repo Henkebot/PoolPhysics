@@ -187,7 +187,7 @@ int main()
 
 			t2 += dt2;
 
-			if (t2 > 200) return 0;
+		//	if (t2 > 200) return 0;
 
 			background.update(window,t2, dt2);
 

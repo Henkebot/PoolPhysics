@@ -37,7 +37,7 @@ Table::Table(int width, int height, float scale)
 	m_sprite.setPosition(m_position.x, m_position.y);
 	m_sprite.scale(m_Scale.x, m_Scale.y);
 
-	m_stepFunction =RK4 ;
+	m_stepFunction =Euler ;
 
 	m_dataOut.open("Results.txt");
 	const char* method = (m_stepFunction == Euler) ? "Euler\n" : "RK4\n";
@@ -184,7 +184,7 @@ void Table::_initHoles()
 
 void Table::_initBalls()
 {
-	/*glm::vec2 dir(1, -1);
+	glm::vec2 dir(1, -1);
 	glm::vec2 dir2(1, 1);
 	int startX = m_Width - (m_Width * m_Scale.x * 0.85f);
 	int startY = m_Height - (m_Height * m_Scale.y * 0.5f);
@@ -201,13 +201,13 @@ void Table::_initBalls()
 			direction.y += startY;
 			m_Balls.push_back(Ball(direction));
 		}
-	}*/
+	}
 	
-	m_Balls.push_back(Ball(glm::vec2(m_Width * 0.1f, m_Height * 0.5f)));
+	/*m_Balls.push_back(Ball(glm::vec2(m_Width * 0.1f, m_Height * 0.5f)));
 	m_Balls[0].setVelocity(glm::vec2(50, 0));
 	m_Balls[0].setAngleVelocity(glm::vec3(0, 0,0.001f));
 	m_Balls.push_back(Ball(glm::vec2(m_Width * 0.9f, m_Height * 0.5f)));
-
+*/
 	currentBallIndex = m_Balls.size() - 1;
 	m_Balls[currentBallIndex].getShape().setOutlineColor(sf::Color::Black);
 	m_Balls[currentBallIndex].getShape().setOutlineThickness(5.0f);

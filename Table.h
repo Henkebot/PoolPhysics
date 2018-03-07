@@ -36,6 +36,12 @@ private:
 		Euler,
 		RK4
 	};
+
+	struct State
+	{
+		glm::vec2 x;
+		glm::vec2 v;
+	};
 	
 	StepType m_stepFunction;
 
@@ -78,9 +84,9 @@ private:
 		glm::vec2 dv;      // dv/dt = acceleration
 	};
 
-	Derivative evaluate(Ball& ball, double t, float dt, const Derivative &d);
-	glm::vec2 acceleration(Ball& ball, double t);
-	int integrate(Ball& ball, double t, float dt);
+	Derivative evaluate(Ball& state, double t, float dt, const Derivative &d);
+	glm::vec2 acceleration(Ball& ball, float t);
+	int integrate(Ball& ball, float t, float dt);
 };
 #endif 
 

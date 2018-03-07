@@ -20,6 +20,7 @@ public:
 	~Hole(); 
 
 	void setPosition(glm::vec2 position); 
+	glm::vec2 getPosition() const;
 	bool collision(const Ball& ball) const;
 
 };

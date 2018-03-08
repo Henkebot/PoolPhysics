@@ -87,7 +87,7 @@ private:
 	void _initBalls();
 	
 	void _checkBounds(Ball& ball);
-	int _move(Ball& ball, float dt);
+	int _move(Ball & ball, float t, float dt);
 	glm::vec2 _calculateVel(Ball& ball, float dt);
 	void _collision(Ball& ball1, Ball& ball2);
 
@@ -97,8 +97,9 @@ private:
 		glm::vec2 dv;      // dv/dt = acceleration
 	};
 
-	Derivative _evaluate(Ball& state, float t, float dt);
+	Derivative _evaluate(Ball& initial, float t, float dt, Derivative& d);
 	glm::vec2 _acceleration(Ball& ball, float t);
+	glm::vec2 _acceleration(Ball ball, glm::vec2 x, glm::vec2 v, float t);
 	int _integrate(Ball& ball, float t, float dt);
 };
 #endif 

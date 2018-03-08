@@ -49,7 +49,7 @@ int main()
 	auto timer = steady_clock::now();
 	int currentMenu = 0;
 	bool runSimulation = true;
-	double t2 = 0.0f;
+	float t2 = 0.0f;
     while (window.isOpen())
     {
 		
@@ -192,14 +192,14 @@ int main()
 						std::cout << "Value: ";
 						std::cin >> tempValue;
 						tempValue = glm::clamp(tempValue, 0.0f, 10.0f);
-						curBall->setAngleVelocity(glm::vec3(0, 0, -tempValue * 0.0001f));
-					}
+						curBall->setAngleVelocity(glm::vec3(0, 0, -tempValue * 0.001f));					}
+					break;
 					case 2:
 						std::cout << "1-10?\n";
 						std::cout << "Value: ";
 						std::cin >> tempValue;
 						tempValue = glm::clamp(tempValue, 0.0f, 10.0f);
-						curBall->setAngleVelocity(glm::vec3(0, 0, tempValue * 0.0001f));
+						curBall->setAngleVelocity(glm::vec3(0, 0, tempValue * 0.001f));
 					break;
 					}
 				}
@@ -238,10 +238,10 @@ int main()
 		{
 			updates++;
 			unprocessed -= 1;
-			float dt2 = 0.5f;
+			float dt2 =30.0f / UPDATE_RATE;
 
 
-			t2 += 1.0f / UPDATE_RATE;
+			t2 += dt2;
 
 			if(background.isSimulating())
 				if (t2 > 6.0f) background.stopSimulation();

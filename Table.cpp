@@ -62,24 +62,17 @@ void Table::update(const sf::Window& window, double t, float dt)
 		{
 			if (m_RunSimulation)
 			{
-				_move(m_Balls[i], t + dt);
+				_move(m_Balls[i], t, dt);
 			}
 			else
 			{
-				_move(m_Balls[i], dt);
+				_move(m_Balls[i], 1, dt);
 
 			}
 		}
 		else
 		{
-			if (m_RunSimulation)
-			{
-				_integrate(m_Balls[i],t, dt);
-			}
-			else
-			{
-				_integrate(m_Balls[i], t, dt);
-			}
+			_integrate(m_Balls[i], t, dt);
 		}
 		if (!m_RunSimulation)
 		{
@@ -108,10 +101,20 @@ void Table::update(const sf::Window& window, double t, float dt)
 	if (m_dataOut.is_open())
 	{
 		m_dataOut.imbue(std::locale(m_dataOut.getloc(), new punct_facet<char, ','>));
-		m_dataOut << t + dt << "\t";
-		m_dataOut << glm::length(m_Balls[0].getVelocity()) << "\t";
-		m_dataOut << glm::length(m_Balls[0].getAngleVelocity()) << "\t";
-		m_dataOut << glm::length(m_Balls[0].getAcceleration()) << "\t";
+		m_dataOut << t << "\t";
+		m_dataOut << m_Balls[0].getPosition().x << "\t";
+		m_dataOut << m_Balls[0].getPosition().y << "\t";
+		m_dataOut << m_Balls[0].getVelocity().x << "\t";
+		m_dataOut << m_Balls[0].getVelocity().y << "\t";
+		m_dataOut << m_Balls[0].getAcceleration().x << "\t";
+		m_dataOut << m_Balls[0].getAcceleration().x << "\t\n";
+
+		std::cout << t << "\t";
+		std::cout << m_Balls[0].getPosition().x << "\t";
+		std::cout << m_Balls[0].getPosition().y << "\t";
+		std::cout << glm::length(m_Balls[0].getVelocity()) << "\t";
+		std::cout << glm::length(m_Balls[0].getAcceleration()) << "\t\n";
+		std::cout << "Runs!" << std::endl;
 
 	}
 	
@@ -154,8 +157,7 @@ void Table::runSimulation(StepType type)
 	m_Balls.push_back(Ball(glm::vec2(m_Width * 0.1f, m_Height * 0.5f)));
 	m_Balls[0].setVelocity(glm::vec2(50, 0));
 	m_Balls[0].setAngleVelocity(glm::vec3(0, 0,0.001f));
-	m_Balls.push_back(Ball(glm::vec2(m_Width * 0.9f, m_Height * 0.5f)));
-
+	
 	currentBallIndex = 0;
 	m_stepFunction = type;
 
@@ -163,7 +165,7 @@ void Table::runSimulation(StepType type)
 	m_dataOut.open("Results.txt");
 	const char* method = (m_stepFunction == Euler) ? "Euler\n" : "RK4\n";
 	m_dataOut << method;
-	m_dataOut << "T\tVelocity\tAngleVelocity\tAcceleration\n";
+	m_dataOut << "T\tPosX\tPosY\tVelX\tVelY\tAccX\tAccY\n";
 
 	m_RunSimulation = true;
 	
@@ -174,6 +176,7 @@ void Table::stopSimulation()
 	m_Balls.clear();
 	_initBalls();
 	m_RunSimulation = false;
+	m_dataOut.close();
 }
 
 Table::StepType Table::getStepFunction()
@@ -308,7 +311,7 @@ void Table::_checkBounds(Ball & ball)
 
 }
 
-int Table::_move(Ball & ball, float dt)
+int Table::_move(Ball & ball, float t, float dt)
 {
 
 	int collisionId = -1;
@@ -348,7 +351,9 @@ glm::vec2 Table::_calculateVel(Ball & ball, float dt)
 	glm::vec2  frictionForce = m_Friction * -ball.getVelocity();
 	
 	glm::vec3 magnusEffect = glm::cross((0.1f * 0.5f * M_PI * ball.getRadius() *ball.getRadius() * glm::length(ball.getVelocity()) * 0.5f) * ball.getAngleVelocity(), glm::vec3(ball.getVelocity(),0.0f));
-
+	glm::vec3 magnusEffect2 = glm::cross((M_PI*M_PI*glm::vec3(0, 0, 1)*glm::vec3(0, 0, 1)*glm::vec3(0, 0, 1)*0.5f)*ball.getAngleVelocity(), glm::vec3(ball.getVelocity(),0.0f));
+	if (glm::length(magnusEffect2) > 0)
+		__debugbreak();
  	glm::vec2 finalForce = glm::vec2(frictionForce.x + magnusEffect.x, frictionForce.y + magnusEffect.y);
 
 	glm::vec2 acceleration = (finalForce / ball.getMass()) * dt;
@@ -399,13 +404,14 @@ void Table::_collision(Ball & ball1, Ball & ball2)
 	ball1.setAngleVelocity(w2);
 }
 
-Table::Derivative Table::_evaluate(Ball& initial, float t, float dt)
+Table::Derivative Table::_evaluate(Ball& initial, float t, float dt, Derivative& d)
 {
-	Ball ball = initial;
+	glm::vec2 x = initial.getPosition() + d.dx * dt;
+	glm::vec2 v = initial.getVelocity() + d.dv * dt;
 
 	Derivative output;
-	output.dx = ball.getVelocity() * ((m_RunSimulation) ? t+dt : 1.0f);
-	output.dv = _acceleration(ball, t + dt);
+	output.dx = v;
+	output.dv =  _acceleration(initial,x, v, t + dt);
 
 	return output;
 }
@@ -415,11 +421,33 @@ glm::vec2 Table::_acceleration(Ball & ball, float t)
 
 	glm::vec2 frictionForce = m_Friction * -ball.getVelocity();
 
-	glm::vec3 magnusEffect = glm::cross((0.1f * 0.5f * M_PI * ball.getRadius() *ball.getRadius() * glm::length(ball.getVelocity()) * 0.5f) * ball.getAngleVelocity(), glm::vec3(ball.getVelocity(), 0.0f));
+	glm::vec3 magnusEffect = (0.5f * 0.1f*1.3f*M_PI*ball.getRadius()*ball.getRadius()) * glm::cross(ball.getAngleVelocity(), glm::vec3(ball.getVelocity(),0.0f));
 
 	glm::vec2 finalForce = glm::vec2(frictionForce.x + magnusEffect.x, frictionForce.y + magnusEffect.y);
 
 	glm::vec2 acceleration = (finalForce / ball.getMass()) * ((m_RunSimulation) ? t : 1.0f);
+	if (m_RunSimulation)
+	{
+		std::cout << glm::length(acceleration) << std::endl;
+		ball.setAcceleration(glm::vec3(acceleration,0.0f));
+
+
+	}
+	return acceleration;
+}
+
+glm::vec2 Table::_acceleration(Ball ball, glm::vec2 x, glm::vec2 v, float t)
+{
+
+	glm::vec2 frictionForce = m_Friction * -v;
+
+	glm::vec3 magnusEffect = glm::cross((0.1f * 0.5f * M_PI * ball.getRadius() *ball.getRadius() * glm::length(v) * 0.5f) * ball.getAngleVelocity(), glm::vec3(v, 0.0f));
+
+	glm::vec2 finalForce = glm::vec2(frictionForce.x + magnusEffect.x, frictionForce.y + magnusEffect.y);
+
+	glm::vec2 acceleration = (finalForce / ball.getMass()) * ((m_RunSimulation) ? t : 1.0f);
+
+	ball.setAcceleration(glm::vec3(acceleration, 0.0f));
 
 	return acceleration;
 }
@@ -429,22 +457,23 @@ int Table::_integrate(Ball & ball, float t, float dt)
 
 	Derivative a, b, c, d;
 
-	a = _evaluate(ball, t, 0.0f);
-	b = _evaluate(ball, t, dt*0.2f);
-	c = _evaluate(ball, t, dt*0.7f);
-	d = _evaluate(ball, t, dt);
+	a = _evaluate(ball, t, 0.0f, Derivative());
+	b = _evaluate(ball, t, dt*0.5f, a);
+	c = _evaluate(ball, t, dt*0.5f, b);
+	d = _evaluate(ball, t, dt, c);
 
 	glm::vec2 dxdt = glm::vec2(1.0f / 6.0f *
 		(a.dx + 2.0f * (b.dx + c.dx) + d.dx));
 
 	glm::vec2 dvdt = glm::vec2(1.0f / 6.0f *
-		(a.dv.x + 2.0f * (b.dv.x + c.dv.x) + d.dv.x), 1.0f / 6.0f *
-		(a.dv.y + 2.0f * (b.dv.y + c.dv.y) + d.dv.y));
+		(a.dv + 2.0f * (b.dv + c.dv) + d.dv));
 
-	glm::vec2 oldVel = ball.getVelocity();
 
 	glm::vec2 newPos = ball.getPosition() + dxdt * dt;
 	glm::vec2 newVel = ball.getVelocity() + dvdt * dt;
+
+	ball.setAcceleration(glm::vec3(dvdt* t,0.0f));
+
 
 	bool collision = false;
 
@@ -472,7 +501,7 @@ int Table::_integrate(Ball & ball, float t, float dt)
 	{
 		ball.setPosition(newPos);
 		ball.setVelocity(newVel);
-		ball.setAcceleration(glm::vec3(dvdt, 0.0f));
+		
 	}
 	
 
